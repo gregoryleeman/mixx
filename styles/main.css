@@ -134,7 +134,7 @@ canvas {
 	display: block;
 	position: absolute;
 	line-height: 12px;
-	font-size: 16px;
+	font-size: 12px;
 	top: 0;
 	left: 2px;
 	color: var(--white);

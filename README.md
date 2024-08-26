@@ -2,7 +2,11 @@
 
 A simple drawing application.
 
+![Screenhot of mixx](docs/screenshot.png)
+
 *"Colors were made for mixxing, not for picking..."*
+
+Play with mixx right now on [mixx.gregoryleeman.com](https://mixx.gregoryleeman.com)!
 
 ### Attribution
 
