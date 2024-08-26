@@ -1,0 +1,45 @@
+{
+	"name": "mixx",
+	"version": "1.0.0",
+	"description": "A simple drawing app.",
+	"main": "main.js",
+	"scripts": {
+		"start": "electron .",
+		"dist": "electron-builder"
+	},
+	"build": {
+		"appId": "com.mixx.app",
+		"asar": true,
+		"mac": {
+			"target": [
+				{
+					"target": "dmg",
+					"arch": [
+						"x64",
+						"arm64",
+						"universal"
+					]
+				},
+				{
+					"target": "zip",
+					"arch": [
+						"x64",
+						"arm64"
+					]
+				}
+			],
+			"icon": "icons/icon.icns"
+		},
+		"win": {
+			"target": "nsis",
+			"icon": "icons/icon_256x256.ico"
+		}
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"devDependencies": {
+		"electron": "^32.0.1",
+		"electron-builder": "^24.13.3"
+	}
+}
