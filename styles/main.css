@@ -1,0 +1,243 @@
+:root {
+	--white: #FFFFFF;
+	--button: #DDE4E7;
+	--hover: #B3BBBD;
+	--active: #8F9598;
+	--background: #949C9E;
+	--black: #000000;
+}
+
+
+* {
+	box-sizing: border-box;
+	font-family: 'VT323', monospace;
+}
+
+body {
+	margin: 0;
+	overflow: hidden;
+	display: flex;
+	flex-direction: column;
+	height: 100vh;
+	width: 100vw;
+	background-color: var(--background);
+	color: var(--black);
+}
+
+#tool-tip {
+	position: absolute;
+	width: 16px;
+	height: 16px;
+	z-index: 5;
+	pointer-events: none;
+	cursor: none;
+}
+
+#tool-tip > img {
+	width: 16px;
+	height: 16px;
+	object-fit: contain;
+	filter:
+		drop-shadow(1px 0 0 white)
+		drop-shadow(-1px 0 0 white)
+		drop-shadow(0 1px 0 white)
+        drop-shadow(0 -1px 0 white);
+}
+
+#row {
+	display: flex;
+	flex-direction: row;
+	flex-grow: 1;
+}
+
+#top-bar, #left-bar, #right-bar, #bottom-bar {
+	z-index: 2;
+	background-color: var(--button);
+	display: flex;
+	gap: 8px;
+	justify-content: flex-start;
+	flex-wrap: wrap;
+	padding: 8px;
+}
+
+#top-bar, #bottom-bar {
+	flex-direction: row;
+}
+
+#left-bar, #right-bar {
+	flex-direction: column;
+	padding-top: 0;
+	padding-bottom: 0;
+}
+
+#commands, #colors {
+	display: flex;
+	flex-direction: row;
+	gap: 8px;
+}
+
+#tools {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+#studio {
+	flex-grow: 1;
+	height: 100%;
+	border: 1px solid;
+	cursor: none;
+}
+
+#easel {
+	position: absolute;
+	border: 1px solid;
+	z-index: -1;
+}
+
+canvas {
+	position: absolute;
+	top: 0;
+	left: 0;
+}
+
+.button {
+	background-color: var(--button);
+	border: 1px solid;
+	border-radius: 3px;
+	cursor: pointer;
+}
+
+.button:hover {
+	background-color: var(--hover);
+}
+
+.button.active, .button:active {
+	background-color: var(--active);
+}
+
+.tool-button, .command-button {
+	position: relative;
+	width: 32px;
+	height: 32px;
+	padding: 4px;
+
+}
+
+.tool-button > img, .command-button > img {
+	width: 22px;
+	height: 22px;
+	object-fit: contain;
+}
+
+.key-hint {
+	display: block;
+	position: absolute;
+	line-height: 12px;
+	font-size: 16px;
+	top: 0;
+	left: 2px;
+	color: var(--white);
+	text-shadow:
+		1px 1px 0 #000,
+		-1px 1px 0 #000,
+		-1px -1px 0 #000,
+		1px -1px 0 #000;
+	pointer-events: none;
+}
+
+
+.puck, #brush-color, #canvas-color {
+	width: 32px;
+	height: 32px;
+	border: 1px solid;
+	border-radius: 3px;
+}
+
+#layers {
+	background-color: var(--background);
+	border: 1px solid;
+	padding: 1px;
+	height: 100%;
+	display: flex;
+	flex-direction: column-reverse;
+	justify-content: flex-start;
+	gap: 1px;
+	overflow-y: scroll;
+	min-height: 0;
+}
+
+.layer {
+	width: 96px;
+	height: 48px;
+	background-color: var(--button);
+	border: 1px solid;
+	border-radius: 3px;
+	display: flex;
+	flex-direction: row;
+	gap: 4px;
+	padding: 4px;
+}
+
+.layer.active {
+	background-color: var(--active);
+}
+
+.layer-preview {
+	width: 38px;
+	height: 38px;
+	background-color: var(--background);
+	border: 1px solid;
+	flex-shrink: 0;
+}
+
+.layer-merge-buttons, .layer-move-buttons {
+	flex-grow: 1;
+	display: flex;
+	gap: 4px;
+	flex-direction: column;
+	height: 100%;
+}
+
+.layer-move-button, .layer-merge-button, .layer-delete-button {
+	border: 1px solid;
+	min-height: 0;
+	flex-grow: 1;
+	flex-shrink: 1;
+	border-radius: 3px;
+}
+
+.layer-add-button {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+	width: 100%;
+	height: 18px;
+	background-color: var(--button);
+	border: 1px solid;
+	border-radius: 3px;
+	padding: 1px;
+}
+.layer-add-button > img {
+	height: 100%;
+	width: 100%;
+	object-fit: contain;
+}
+
+.mini-button {
+	display: flex;
+	flex-direction: column;
+	justify-content: center;
+	align-items: center;
+	padding: 1px;
+}
+
+.mini-button > img {
+	width: 100%;
+	height: 100%;
+	object-fit: contain;
+}
+
+.layer-preview {
+	object-fit: contain;
+}
