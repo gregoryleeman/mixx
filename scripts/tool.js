@@ -1,4 +1,4 @@
-function makeTool({name, key, iconPath, mouseDown=undefined, mouseMove=undefined, mouseDrag=undefined, mouseUp=undefined, mouseLeave=undefined}) {
+function makeTool({name, info, key, iconPath, mouseDown=undefined, mouseMove=undefined, mouseDrag=undefined, mouseUp=undefined, mouseLeave=undefined}) {
 	if (!name || !key || !iconPath) {
 		throw new Error("name, key, and iconPath are required to make a tool");
 	}
@@ -7,6 +7,7 @@ function makeTool({name, key, iconPath, mouseDown=undefined, mouseMove=undefined
 
 	tool.init = function() { // {{{
 		tool.name = name;
+		tool.info = info;
 		tool.key = key;
 		tool.iconPath = iconPath;
 		tool.mouseDown = mouseDown;
@@ -23,7 +24,7 @@ function makeTool({name, key, iconPath, mouseDown=undefined, mouseMove=undefined
 	return tool;
 }
 
-function makeTools({controllerElement, toolTipElement}) {
+function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 	if (!controllerElement || !toolTipElement) {
 		throw new Error("controllerElement and toolTipElement are required to make tools");
 	}
@@ -46,7 +47,6 @@ function makeTools({controllerElement, toolTipElement}) {
 		const tool = tools.get({name});
 		if (tool) {
 			tools.activate({tool});
-			console.log(`Activated tool: ${tool.name}`);
 		}
 
 		return tools;
@@ -72,6 +72,21 @@ function makeTools({controllerElement, toolTipElement}) {
 			button.addEventListener("click", () => {
 				tools.activate({tool}).refresh();
 			});
+
+			button.addEventListener("mouseenter", () => {
+				tools.infoTipElement.innerHTML = tool.info;
+				// tools.infoTipElement.style.display = "block";
+			});
+
+			button.addEventListener("mouseleave", () => {
+				// tools.infoTipElement.style.display = "none";
+				tools.infoTipElement.innerHTML = 'mixx.';
+			});
+
+			// button.addEventListener("mousemove", (event) => {
+			// 	tools.infoTipElement.style.left = `${event.clientX + 20}px`;
+			// 	tools.infoTipElement.style.top = `${event.clientY + 20}px`;
+			// });
 
 			if (tool.key) {
 				const keyHint = document.createElement("div");
@@ -103,6 +118,7 @@ function makeTools({controllerElement, toolTipElement}) {
 	tools.init = function() { // {{{
 		tools.controllerElement = controllerElement;
 		tools.toolTipElement = toolTipElement;
+		tools.infoTipElement = infoTipElement;
 		tools.active = null;
 		tools.previous = null;
 

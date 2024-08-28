@@ -168,45 +168,106 @@ function makeCanvas({height, width}) {
 		return canvas;
 	}; // }}}
 
-	canvas.drawCircle = function({x, y, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
-		if (diameter === 1) {
-			canvas.drawPixel({x, y, color, erase});
-		}
-		let radius = Math.floor(diameter / 2);
-		let radiusSquared = radius * radius;
-		for (let y1 = -radius; y1 <= radius; y1++) {
-			for (let x1 = -radius; x1 <= radius; x1++) {
-				if ((x1 * x1 + y1 * y1) <= radiusSquared - radius) {
-					canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
-				}
-			}
-		}
+canvas.drawCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) {
+    if (diameter === 1) {
+        canvas.drawPixel({x, y, color, erase});
+        return canvas;
+    }
 
-		return canvas;
-	}; // }}}
+    let radius = Math.floor(diameter / 2);
+    let radiusSquared = radius * radius;
 
-	canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) { // {{{
-		if (diameter === 1) {
-			canvas.drawPixel({x, y, color, erase});
-			return canvas;
-		}
+    for (let y1 = -radius; y1 <= radius; y1++) {
+        for (let x1 = -radius; x1 <= radius; x1++) {
+            if ((x1 * x1 + y1 * y1) < radiusSquared) {
+                canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+            }
+        }
+    }
 
-		let radius = Math.floor(diameter / 2);
-		let radiusSquared = radius * radius;
+    return canvas;
+};
 
-		for (let y1 = -radius; y1 <= radius; y1++) {
-			for (let x1 = -radius; x1 <= radius; x1++) {
-				let distanceSquared = x1 * x1 + y1 * y1;
+canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) {
+    if (diameter <= 1) {
+        canvas.drawPixel({x, y, color, erase});
+        return canvas;
+    }
+    canvas.drawCircle({x, y, diameter, color, erase});
+	canvas.drawCircle({x, y, diameter: diameter - 2, color, erase: true});
+    return canvas;
+};
 
-				// Check if the point is on the circumference
-				if (distanceSquared >= radiusSquared - radius && distanceSquared <= radiusSquared + radius) {
-					canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
-				}
-			}
-		}
 
-		return canvas;
-	}; // }}}
+
+
+
+
+
+// canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) {
+//     if (diameter === 1) {
+//         canvas.drawPixel({x, y, color, erase});
+//         return canvas;
+//     }
+
+//     let radius = Math.floor(diameter / 2);
+//     let radiusSquared = radius * radius;
+
+//     for (let y1 = -radius; y1 <= radius; y1++) {
+//         for (let x1 = -radius; x1 <= radius; x1++) {
+//             let distanceSquared = x1 * x1 + y1 * y1;
+
+//             // Check if the point is exactly on the circumference of the filled circle
+//             if (distanceSquared >= radiusSquared - radius && distanceSquared < radiusSquared) {
+//                 canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+//             }
+//         }
+//     }
+
+//     return canvas;
+// };
+
+	
+
+	// canvas.drawCircle = function({x, y, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
+	// 	if (diameter === 1) {
+	// 		canvas.drawPixel({x, y, color, erase});
+	// 	}
+	// 	let radius = Math.floor(diameter / 2);
+	// 	let radiusSquared = radius * radius;
+	// 	for (let y1 = -radius; y1 <= radius; y1++) {
+	// 		for (let x1 = -radius; x1 <= radius; x1++) {
+	// 			if ((x1 * x1 + y1 * y1) <= radiusSquared - radius) {
+	// 				canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+	// 			}
+	// 		}
+	// 	}
+
+	// 	return canvas;
+	// }; // }}}
+
+	// canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) { // {{{
+	// 	if (diameter === 1) {
+	// 		canvas.drawPixel({x, y, color, erase});
+	// 		return canvas;
+	// 	}
+
+	// 	let radius = Math.floor(diameter / 2);
+	// 	let radiusSquared = radius * radius;
+
+	// 	for (let y1 = -radius; y1 <= radius; y1++) {
+	// 		for (let x1 = -radius; x1 <= radius; x1++) {
+	// 			let distanceSquared = x1 * x1 + y1 * y1;
+
+	// 			// Check if the point is on the circumference
+	// 			if (distanceSquared >= radiusSquared - radius && distanceSquared <= radiusSquared + radius) {
+	// 				canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+	// 			}
+	// 		}
+	// 	}
+
+	// 	return canvas;
+	// }; // }}}
 
 	canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 		if (diameter === 1) {
@@ -279,10 +340,17 @@ function makeCanvas({height, width}) {
 	canvas.getPositionOnCanvas = function(e) { // {{{
 		const rect = canvas.getBoundingClientRect();
 		return {
-			x: Math.round((e.clientX - rect.left) / zoom),
-			y: Math.round((e.clientY - rect.top) / zoom),
+			x: Math.round((e.clientX - rect.left) / canvas.zoomScale),
+			y: Math.round((e.clientY - rect.top) / canvas.zoomScale),
 		};
 	} // }}}
+
+	canvas.zoom = function({scale}) { // {{{
+		canvas.zoomScale = scale;
+		canvas.style.width = `${canvas.width * scale}px`;
+		canvas.style.height = `${canvas.height * scale}px`;
+		return canvas;
+	} // }}}	
 
 	canvas.init = function() { // {{{
 		canvas.style.imageRendering = "pixelated";
@@ -290,6 +358,7 @@ function makeCanvas({height, width}) {
 		canvas.temp = document.createElement("canvas");
 		canvas.temp.ctx = canvas.temp.getContext("2d", { willReadFrequently: true });
 		canvas.resize({height, width});
+		canvas.zoomScale = 1;
 
 		return canvas;
 	} // }}}

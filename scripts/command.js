@@ -1,21 +1,24 @@
-function makeCommand({name, key=undefined, iconPath, func}) {
+function makeCommand({name, info, key=undefined, iconPath, func}) {
 	const command = {};
 	command.name = name;
+	command.info = info;
 	command.key = key;
 	command.iconPath = iconPath;
 	command.func = function() {
 		func();
 	}
 
+
 	return command;
 }
 
-function makeCommands({controllerElement}) {
+function makeCommands({controllerElement, infoTipElement}) {
 	const commands = [];
 	commands.controllerElement = controllerElement;
+	commands.infoTipElement = infoTipElement;
 
-	commands.add = function({name, key, iconPath, func}) {
-		const command = makeCommand({name, key, iconPath, func});
+	commands.add = function({name, info, key, iconPath, func}) {
+		const command = makeCommand({name, info, key, iconPath, func});
 		commands.push(command);
 	};
 
@@ -35,9 +38,19 @@ function makeCommands({controllerElement}) {
 			button.classList.add('button');
 			button.classList.add('command-button');
 			button.innerHTML = `<img src="${command.iconPath}" alt="${command.name}">`;
-			button.onclick = () => {
+			button.addEventListener("click", () => {
 				command.func();
-			};
+			});
+			button.addEventListener("mouseenter", () => {
+				commands.infoTipElement.innerHTML = command.info;
+			});
+			button.addEventListener("mouseleave", () => {
+				commands.infoTipElement.innerHTML = 'mixx.';
+			});
+			// button.addEventListener("mousemove", (event) => {
+			// 	commands.infoTipElement.style.left = `${event.clientX + 20}px`;
+			// 	commands.infoTipElement.style.top = `${event.clientY + 20}px`;
+			// });
 
 			if (command.key) {
 				const keyHint = document.createElement("div");

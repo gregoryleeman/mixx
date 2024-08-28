@@ -60,7 +60,7 @@ function makeLayer({height=600, width=800}={}) {
 }
 
 
-function makeLayers({easelElement, controllerElement, height=600, width=800, backgroundColor=makeColor({r: 255, g: 255, b: 255})}) {
+function makeLayers({easelElement, controllerElement, sizeControllerElement, height=600, width=800, backgroundColor=makeColor({r: 255, g: 255, b: 255}), infoTipElement}) {
 	if (!easelElement || !controllerElement) {
 		throw new Error("easelElement and controllerElement are required to make layers");
 	}
@@ -102,6 +102,8 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 	}; // }}}
 
 	layers.saveToLocalStorage = function() { // {{{
+		// const currentState = JSON.stringify(layers._serialize());
+		// localStorage.setItem('layers', currentState);
 		const historyData = JSON.stringify(layers.historyStack);
 		const redoData = JSON.stringify(layers.redoStack);
 		localStorage.setItem('layersHistory', historyData);
@@ -111,6 +113,17 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 	}; // }}}
 
 	layers.loadFromLocalStorage = function() { // {{{
+		// const currentState = localStorage.getItem('layers');
+		// if (currentState) {
+		// 	console.log("Restoring current state from local storage");
+		// 	const state = JSON.parse(currentState);
+		// 	console.log(state);
+		// 	layers._deserialize({ state });
+		// 	layers.historyStack = [];
+		// 	layers.redoStack = [];
+		// } else {
+		// 	console.log("No current state found in local storage");
+		// }
 		const historyData = localStorage.getItem('layersHistory');
 		const redoData = localStorage.getItem('layersRedo');
 		if (historyData) {
@@ -136,6 +149,7 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 		layers.historyStack.push(state);
 		layers.redoStack = [];
 		layers.saveToLocalStorage();
+		console.log("Saving current state to history stack");
 		
 		return layers;
 	}; // }}}
@@ -289,6 +303,22 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 		return layers;
 	}; // }}}
 
+	layers.zoom = function({scale}) { // {{{
+		if (scale <= 1) {
+			scale = 1;
+		}
+		if (scale >= 16) {
+			scale = 16;
+		}
+		layers.zoomScale = scale;
+		layers.forEach(layer => {
+			layer.drawCanvas.zoom({scale});
+			layer.selectCanvas.zoom({scale});
+		});
+		easelElement.style.width = `${layers.width * scale}px`;
+		easelElement.style.height = `${layers.height * scale}px`;
+		return layers;
+	} // }}}
 
 	// export and import
 
@@ -345,7 +375,12 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 				previewElement.addEventListener("click", () => {
 					layers.activate({layer}).refreshController().refreshEasel();
 				});
-
+				previewElement.addEventListener("mouseenter", () => {
+					layers.infoTipElement.innerHTML = 'Select layer.';
+				});
+				previewElement.addEventListener("mouseleave", () => {
+					layers.infoTipElement.innerHTML = 'mixx.';
+				});
 
 				const moveButtons = document.createElement("div");
 				moveButtons.classList.add("layer-move-buttons");
@@ -359,6 +394,12 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 				moveUpButton.addEventListener("click", () => {
 					layers.moveUp({layer}).save().refreshController().refreshEasel();
 				});
+				moveUpButton.addEventListener("mouseenter", () => {
+					layers.infoTipElement.innerHTML = 'Move layer up.';
+				});
+				moveUpButton.addEventListener("mouseleave", () => {
+					layers.infoTipElement.innerHTML = 'mixx.';
+				});
 
 				moveButtons.appendChild(moveUpButton);
 
@@ -369,6 +410,12 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 				moveDownButton.innerHTML = `<img src="icons/solid/arrow-down.svg" alt="move down">`;
 				moveDownButton.addEventListener("click", () => {
 					layers.moveDown({layer}).save().refreshController().refreshEasel();
+				});
+				moveDownButton.addEventListener("mouseenter", () => {
+					layers.infoTipElement.innerHTML = 'Move layer down.';
+				});
+				moveDownButton.addEventListener("mouseleave", () => {
+					layers.infoTipElement.innerHTML = 'mixx.';
 				});
 
 				moveButtons.appendChild(moveDownButton);
@@ -387,6 +434,13 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 				mergeDownButton.addEventListener("click", () => {
 					layers.mergeDown({layer}).save().refreshController().refreshEasel();
 				});
+				mergeDownButton.addEventListener("mouseenter", () => {
+					layers.infoTipElement.innerHTML = 'Merge down.';
+				});
+				mergeDownButton.addEventListener("mouseleave", () => {
+					layers.infoTipElement.innerHTML = 'mixx.';
+				});
+
 
 				mergeButtons.appendChild(mergeDownButton);
 
@@ -398,6 +452,12 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 				deleteButton.innerHTML = `<img src="icons/regular/trash-can.svg" alt="delete">`;
 				deleteButton.addEventListener("click", () => {
 					layers.remove({layer}).save().refreshController().refreshEasel();
+				});
+				deleteButton.addEventListener("mouseenter", () => {
+					layers.infoTipElement.innerHTML = 'Delete layer.';
+				});
+				deleteButton.addEventListener("mouseleave", () => {
+					layers.infoTipElement.innerHTML = 'mixx.';
 				});
 
 				mergeButtons.appendChild(deleteButton);
@@ -416,10 +476,63 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 		addLayerButton.addEventListener("click", () => {
 			layers.add().save().refresh();
 		});
+		addLayerButton.addEventListener("mouseenter", () => {
+			layers.infoTipElement.innerHTML = 'Add a new layer.';
+		});
+		addLayerButton.addEventListener("mouseleave", () => {
+			layers.infoTipElement.innerHTML = 'mixx.';
+		});
+
 		layers.controllerElement.appendChild(addLayerButton)
 
 		return layers;
 	}; // }}}
+
+	layers.refreshSizeController = function() { // {{{
+		layers.sizeControllerElement.innerHTML = "";
+
+		const heightInputWrapper = document.createElement("div");
+		heightInputWrapper.classList.add("size-input-wrapper");
+		const heightInput = document.createElement("input");
+		heightInput.classList.add("size-input");
+		heightInput.type = "number";
+		heightInput.value = layers.height;
+		heightInput.addEventListener("change", () => {
+			layers.resize({height: parseInt(heightInput.value), width: layers.width}).save().refresh();
+		});
+
+		heightInputWrapper.addEventListener("mouseenter", () => {
+			layers.infoTipElement.innerHTML = 'Change canvas height.';
+		});
+		heightInputWrapper.addEventListener("mouseleave", () => {
+			layers.infoTipElement.innerHTML = 'mixx.';
+		});
+
+		heightInputWrapper.appendChild(heightInput);
+		layers.sizeControllerElement.appendChild(heightInputWrapper);
+
+		const widthInputWrapper = document.createElement("div");
+		widthInputWrapper.classList.add("size-input-wrapper");
+		const widthInput = document.createElement("input");
+		widthInput.classList.add("size-input");
+		widthInput.type = "number";
+		widthInput.value = layers.width;
+		widthInput.addEventListener("change", () => {
+			layers.resize({height: layers.height, width: parseInt(widthInput.value)}).save().refresh();
+		});
+
+		widthInputWrapper.addEventListener("mouseenter", () => {
+			layers.infoTipElement.innerHTML = 'Change canvas width.';
+		});
+		widthInputWrapper.addEventListener("mouseleave", () => {
+			layers.infoTipElement.innerHTML = 'mixx.';
+		});
+
+		widthInputWrapper.appendChild(widthInput);
+		layers.sizeControllerElement.appendChild(widthInputWrapper);
+
+		return layers;
+	} // }}}
 
 	layers.refreshPreviews = function() { // {{{
 		layers.forEach(layer => {
@@ -433,6 +546,7 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 		layers
 			.refreshEasel()
 			.refreshController()
+			.refreshSizeController()
 			.refreshPreviews();
 
 		return layers;
@@ -453,8 +567,11 @@ function makeLayers({easelElement, controllerElement, height=600, width=800, bac
 		layers.width = width;
 		layers.easelElement = easelElement;
 		layers.controllerElement = controllerElement;
+		layers.infoTipElement = infoTipElement;
+		layers.sizeControllerElement = sizeControllerElement;
 		layers.activeIndex = 1;
 		layers.clear();
+		layers.zoom({scale: 1});
 		layers.push(makeLayer({height: layers.height, width: layers.width}).fill({color: layers.backgroundColor}));
 		layers.push(makeLayer({height: layers.height, width: layers.width}));
 

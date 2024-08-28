@@ -1,4 +1,4 @@
-function makePucks({controllerElement, brushColor, interval}) {
+function makePucks({controllerElement, brushColor, interval, infoTipElement}) {
 	const pucks = [];
 
 	pucks.refreshController = function() { // {{{
@@ -17,12 +17,17 @@ function makePucks({controllerElement, brushColor, interval}) {
 				}, 50);
 			});
 
+			element.addEventListener('mouseenter', (e) => {
+				infoTipElement.innerHTML = `${puck.color.name} (click and hold to mix with current brush color).`;
+			});
+
 			element.addEventListener('mouseup', (e) => {
 				clearInterval(interval);
 			});
 
 			element.addEventListener('mouseleave', (e) => {
 				clearInterval(interval);
+				infoTipElement.innerHTML = 'mixx.';
 			});
 
 			controllerElement.appendChild(element);

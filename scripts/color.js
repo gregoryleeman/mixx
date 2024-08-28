@@ -1,4 +1,4 @@
-function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined} = {}) {
+function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined, name=undefined, infoTipElement=undefined}) {
 	const color = {};
 
 	color.fromRgbaArray = function({rgbaArray}) { // {{{
@@ -9,7 +9,6 @@ function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined} = {}) {
 		if (controllerElement) {
 			controllerElement.style.backgroundColor = color.toRgbaString();
 		}
-
 		return color;
 	}; // }}}
 
@@ -116,7 +115,14 @@ function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined} = {}) {
 
 	color.refreshController = function() { // {{{
 		controllerElement.style.backgroundColor = color.toRgbaString();
-
+		if (name && infoTipElement) {
+			controllerElement.addEventListener("mouseenter", () => {
+				infoTipElement.innerHTML = `${name}.`;
+			});
+			controllerElement.addEventListener("mouseleave", () => {
+				infoTipElement.innerHTML = 'mixx.';
+			});
+		}
 		return color;
 	} // }}}
 
@@ -131,6 +137,7 @@ function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined} = {}) {
 		color.g = g;
 		color.b = b;
 		color.a = a;
+		color.name = name;
 
 		return color;
 	} // }}}

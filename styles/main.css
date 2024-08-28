@@ -189,6 +189,7 @@ canvas {
 	background-color: var(--background);
 	border: 1px solid;
 	flex-shrink: 0;
+	cursor: pointer;
 }
 
 .layer-merge-buttons, .layer-move-buttons {
@@ -240,4 +241,43 @@ canvas {
 
 .layer-preview {
 	object-fit: contain;
+}
+
+#size {
+	display: flex;
+	flex-direction: row;
+	gap: 8px;
+}
+
+.size-input {
+	display: block;
+	font-size: 24px;
+	width: 64px;
+	height: 32px;
+	/* -moz-appearance: textfield; */
+}
+
+.size-input::-webkit-inner-spin-button,
+.size-input::-webkit-outer-spin-button {
+	-webkit-appearance: none;
+	margin: 0;
+}
+
+.size-input-wrapper {
+	position: relative;
+}
+.size-input-wrapper:after {
+	content: 'px';
+	position: absolute;
+	right: 4px;
+	bottom: 4px;
+	pointer-events: none;
+}
+
+#info-tip {
+	height: 12px;
+	padding-left: 8px;
+	padding-top: 2px;
+	background-color: var(--button);
+	z-index: 5;
 }

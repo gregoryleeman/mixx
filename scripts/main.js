@@ -1,7 +1,9 @@
 // CONSTANTS {{{
 const toolTipElement = document.getElementById('tool-tip');
+const infoTipElement = document.getElementById('info-tip');
 const colorTipElement = document.getElementById('color-tip');
 const commandsElement = document.getElementById('commands');
+const sizeElement = document.getElementById('size');
 const toolsElement = document.getElementById('tools');
 const brushColorElement = document.getElementById('brush-color');
 const canvasColorElement = document.getElementById('canvas-color');
@@ -10,7 +12,6 @@ const easelElement = document.getElementById('easel');
 const layersElement = document.getElementById('layers');
 const colorsElement = document.getElementById('colors');
 
-const dZoom = 0.001;
 const dBrushSize = 0.5;
 const dOpacity = 0.001;
 const initialWidth = 800;
@@ -23,7 +24,6 @@ const tolerance = 1;
 // VARIABLES {{{
 
 let brushSize = 10;
-let zoom = 1;
 let startX = 0;
 let startY = 0;
 let endX = 0;
@@ -58,6 +58,8 @@ function home() {
 const layers = makeLayers({
 	controllerElement: layersElement,
 	easelElement: easelElement,
+	sizeControllerElement: sizeElement,
+	infoTipElement: infoTipElement,
 	height: initialHeight,
 	width: initialWidth
 });
@@ -68,37 +70,38 @@ layers.loadFromLocalStorage().updateActive().refresh();
 
 // COLORS {{{
 
-const black = makeColor({r: 0, g: 0, b: 0})
-const white = makeColor({r: 255, g: 255, b: 255})
-const cadmiumYellow = makeColor({r: 254, g: 236, b: 0})
-const hansaYellow = makeColor({r: 252, g: 211, b: 0})
-const cadmiumOrange = makeColor({r: 255, g: 105, b: 0})
-const cadmiumRed = makeColor({r: 255, g: 39, b: 2})
-const quinacridoneMagenta = makeColor({r: 128, g: 2, b: 46})
-const cobaltViolet = makeColor({r: 78, g: 0, b: 66})
-const ultramarineBlue = makeColor({r: 25, g: 0, b: 89})
-const cobaltBlue = makeColor({r: 0, g: 33, b: 133})
-const phthaloBlue = makeColor({r: 13, g: 27, b: 68})
-const phthaloGreen = makeColor({r: 0, g: 60, b: 50})
-const permanentGreen = makeColor({r: 7, g: 109, b: 22})
-const sapGreen = makeColor({r: 107, g: 148, b: 4})
-const burntSienna = makeColor({r: 123, g: 72, b: 0})
-const red = makeColor({r: 255, g: 0, b: 0})
-const green = makeColor({r: 0, g: 255, b: 0})
-const blue = makeColor({r: 0, g: 0, b: 255})
-const cyan = makeColor({r: 0, g: 255, b: 255})
-const yellow = makeColor({r: 255, g: 255, b: 0})
-const magenta = makeColor({r: 255, g: 0, b: 255})
+const black = makeColor({r: 0, g: 0, b: 0, name: 'Black'});
+const white = makeColor({r: 255, g: 255, b: 255, name: 'White'});
+const cadmiumYellow = makeColor({r: 254, g: 236, b: 0, name: 'Cadmium Yellow'});
+const hansaYellow = makeColor({r: 252, g: 211, b: 0, name: 'Hansa Yellow'});
+const cadmiumOrange = makeColor({r: 255, g: 105, b: 0, name: 'Cadmium Orange'});
+const cadmiumRed = makeColor({r: 255, g: 39, b: 2, name: 'Cadmium Red'});
+const quinacridoneMagenta = makeColor({r: 128, g: 2, b: 46, name: 'Quinacridone Magenta'});
+const cobaltViolet = makeColor({r: 78, g: 0, b: 66, name: 'Cobalt Violet'});
+const ultramarineBlue = makeColor({r: 25, g: 0, b: 89, name: 'Ultramarine Blue'});
+const cobaltBlue = makeColor({r: 0, g: 33, b: 133, name: 'Cobalt Blue'});
+const phthaloBlue = makeColor({r: 13, g: 27, b: 68, name: 'Phthalo Blue'});
+const phthaloGreen = makeColor({r: 0, g: 60, b: 50, name: 'Phthalo Green'});
+const permanentGreen = makeColor({r: 7, g: 109, b: 22, name: 'Permanent Green'});
+const sapGreen = makeColor({r: 107, g: 148, b: 4, name: 'Sap Green'});
+const burntSienna = makeColor({r: 123, g: 72, b: 0, name: 'Burnt Sienna'});
+const red = makeColor({r: 255, g: 0, b: 0, name: 'Red'});
+const green = makeColor({r: 0, g: 255, b: 0, name: 'Green'});
+const blue = makeColor({r: 0, g: 0, b: 255, name: 'Blue'});
+const cyan = makeColor({r: 0, g: 255, b: 255, name: 'Cyan'});
+const yellow = makeColor({r: 255, g: 255, b: 0, name: 'Yellow'});
+const magenta = makeColor({r: 255, g: 0, b: 255, name: 'Magenta'});
 
 const tempColor = makeColor({r: 0, g: 0, b: 0});
-const brushColor = makeColor({r: 0, g: 0, b: 0, controllerElement: brushColorElement}).refresh();
-const canvasColor = makeColor({r: 0, g: 0, b: 0, controllerElement: canvasColorElement}).refresh();
+const brushColor = makeColor({r: 0, g: 0, b: 0, controllerElement: brushColorElement, name: 'Current brush color', infoTipElement: infoTipElement}).refresh();
+const canvasColor = makeColor({r: 0, g: 0, b: 0, controllerElement: canvasColorElement, name: 'Color under cursor', infoTipElement: infoTipElement}).refresh();
 
 // }}}
 
 // PUCKS {{{
 const pucks = makePucks({
 	controllerElement: colorsElement,
+	infoTipElement: infoTipElement,
 	brushColor: brushColor,
 	interval: interval
 });
@@ -132,11 +135,13 @@ pucks.refresh();
 // COMMANDS {{{
 
 const commands = makeCommands({
-	controllerElement: commandsElement
+	controllerElement: commandsElement,
+	infoTipElement: infoTipElement
 });
 
 commands.add({ // undo {{{
 	name: 'Undo',
+	info: 'Undo the last action.',
 	key: 'z',
 	iconPath: 'icons/solid/rotate-left.svg',
 	func: () => {
@@ -145,6 +150,7 @@ commands.add({ // undo {{{
 }); // }}}
 commands.add({ // redo {{{
 	name: 'Redo',
+	info: 'Redo the last action.',
 	key: 'y',
 	iconPath: 'icons/solid/rotate-right.svg',
 	func: () => {
@@ -153,6 +159,7 @@ commands.add({ // redo {{{
 }); // }}}
 commands.add({ // reset {{{
 	name: 'Reset',
+	info: 'Reset the entire project.',
 	iconPath: 'icons/regular/trash-can.svg',
 	func: () => {
 		layers.reset().save().updateActive().refresh();
@@ -160,6 +167,7 @@ commands.add({ // reset {{{
 }); // }}}
 commands.add({ // clear {{{
 	name: 'Clear',
+	info: 'Clear the active layer.',
 	key: 'c',
 	iconPath: 'icons/solid/broom.svg',
 	func: () => {
@@ -169,6 +177,7 @@ commands.add({ // clear {{{
 }); // }}}
 commands.add({ // save {{{
 	name: 'Save',
+	info: 'Save the project to a PNG file.',
 	iconPath: 'icons/solid/file-arrow-down.svg',
 	func: () => {
 		layers.exportPng();
@@ -176,11 +185,49 @@ commands.add({ // save {{{
 }); // }}}
 commands.add({ // home {{{
 	name: 'Home',
+	info: 'Return the easel to the home position.',
 	iconPath: 'icons/solid/house.svg',
 	func: () => {
+		layers.zoom({scale: 1}).refresh();
 		home();
 	}
 }); // }}}
+commands.add({ // zoom-in
+	name: 'Zoom In',
+	info: 'Zoom in on the easel.',
+	iconPath: 'icons/solid/magnifying-glass-plus.svg',
+	func: () => {
+		const scale = layers.zoomScale * 2;
+		layers.zoom({scale}).refresh();
+	}
+});
+commands.add({ // zoom-out
+	name: 'Zoom Out',
+	info: 'Zoom out on the easel.',
+	iconPath: 'icons/solid/magnifying-glass-minus.svg',
+	func: () => {
+		const scale = layers.zoomScale / 2;
+		layers.zoom({scale}).refresh();
+	}
+});
+commands.add({ // increase-brush-size
+	name: 'Increase Brush Size',
+	info: 'Increase the size of the brush.',
+	iconPath: 'icons/solid/maximize.svg',
+	func: () => {
+		brushSize += 1;
+		brushSize = Math.min(Math.max(brushSize, 1), maxBrushSize);
+	}
+});
+commands.add({ // decrease-brush-size
+	name: 'Decrease Brush Size',
+	info: 'Decrease the size of the brush.',
+	iconPath: 'icons/solid/minimize.svg',
+	func: () => {
+		brushSize -= 1;
+		brushSize = Math.min(Math.max(brushSize, 1), maxBrushSize);
+	}
+});
 
 commands.refresh();
 
@@ -190,11 +237,13 @@ commands.refresh();
 
 const tools = makeTools({
 	controllerElement: toolsElement,
-	toolTipElement: toolTipElement
+	toolTipElement: toolTipElement,
+	infoTipElement: infoTipElement
 });
 
 tools.push(makeTool({ // brush {{{
 	name: 'Brush',
+	info: 'Brush tool.',
 	key: 'b',
 	iconPath: 'icons/solid/pen.svg',
 	mouseMove: (e) => {
@@ -251,6 +300,7 @@ tools.push(makeTool({ // brush {{{
 
 tools.push(makeTool({ // eraser {{{
 	name: 'Eraser',
+	info: 'Eraser tool.',
 	key: 'e',
 	iconPath: 'icons/solid/eraser.svg',
 	mouseMove: (e) => {
@@ -309,6 +359,7 @@ tools.push(makeTool({ // eraser {{{
 
 tools.push(makeTool({ // brush-size {{{
 	name: 'Brush Size',
+	info: 'Change the size of the brush.',
 	key: 's',
 	iconPath: 'icons/regular/circle-dot.svg',
 	mouseMove: (e) => {
@@ -341,6 +392,7 @@ tools.push(makeTool({ // brush-size {{{
 
 tools.push(makeTool({ // bucket {{{
 	name: 'Bucket',
+	info: 'Flood-fill an area.',
 	key: 'k',
 	iconPath: 'icons/solid/fill.svg',
 	mouseMove: (e) => {
@@ -372,6 +424,7 @@ tools.push(makeTool({ // bucket {{{
 
 tools.push(makeTool({ // move {{{
 	name: 'Move',
+	info: 'Move the easel.',
 	key: 'm',
 	iconPath: 'icons/solid/arrows-up-down-left-right.svg',
 	mouseDown: (e) => {
@@ -386,6 +439,7 @@ tools.push(makeTool({ // move {{{
 
 tools.push(makeTool({ // resize {{{
 	name: 'Resize',
+	info: 'Resize the easel.',
 	key: 'r',
 	iconPath: 'icons/solid/ruler-combined.svg',
 	mouseDrag: (e) => {
@@ -402,6 +456,7 @@ tools.push(makeTool({ // resize {{{
 
 tools.push(makeTool({ // content-move {{{
 	name: 'Content Move',
+	info: 'Move the content of the active canvas.',
 	key: 'h',
 	iconPath: 'icons/regular/hand.svg',
 	mouseDown: (e) => {
@@ -422,6 +477,7 @@ tools.push(makeTool({ // content-move {{{
 
 tools.push(makeTool({ // color-mix {{{
 	name: 'color-mix',
+	info: 'Mix the current brush color with the color on the canvas (click and hold).',
 	key: 'x',
 	iconPath: 'icons/solid/mortar-pestle.svg',
 	mouseMove: (e) => {
