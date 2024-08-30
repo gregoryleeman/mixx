@@ -1,4 +1,4 @@
-# mixx
+# ![Mixx Icon](icons/icon_64x64.png) mixx
 
 A simple drawing application.
 

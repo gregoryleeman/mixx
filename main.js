@@ -5,12 +5,10 @@ function createWindow() {
 	const win = new BrowserWindow({
 		width: 800,
 		height: 600,
+		icon: path.join(__dirname, 'icons/icon.icns'),
 	});
-
 	win.maximize();
 	win.loadFile('index.html');
-
-	win.webContents.openDevTools();
 }
 
 app.whenReady().then(() => {
