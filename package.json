@@ -1,16 +1,23 @@
 {
 	"name": "mixx",
-	"version": "0.1.0",
+	"version": "1.0.0",
 	"description": "A simple drawing app.",
 	"main": "main.js",
 	"scripts": {
-		"start": "electron ."
+		"start": "electron .",
+		"dist": "electron-builder"
+	},
+	"build": {
+		"appId": "com.mixx.app",
+		"asar": true,
+		"icon": "icons/icon.icns"
 	},
 	"keywords": [],
 	"author": "",
 	"license": "ISC",
 	"devDependencies": {
 		"electron": "^32.0.1",
+		"electron-builder": "^24.13.3",
 		"electron-packager": "^17.1.2"
 	}
 }
