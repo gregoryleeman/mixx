@@ -60,7 +60,8 @@ function makeLayer({height=600, width=800}={}) {
 }
 
 
-function makeLayers({easelElement, controllerElement, sizeControllerElement, height=600, width=800, backgroundColor=makeColor({r: 255, g: 255, b: 255}), infoTipElement}) {
+function makeLayers({easelElement, controllerElement, sizeControllerElement, zoomControllerElement,
+	height=600, width=800, backgroundColor=makeColor({r: 255, g: 255, b: 255}), infoTipElement}) {
 	if (!easelElement || !controllerElement) {
 		throw new Error("easelElement and controllerElement are required to make layers");
 	}
@@ -613,6 +614,7 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, hei
 
 		const heightInputWrapper = document.createElement("div");
 		heightInputWrapper.classList.add("size-input-wrapper");
+		heightInputWrapper.classList.add("height-input-wrapper");
 		const heightInput = document.createElement("input");
 		heightInput.classList.add("size-input");
 		heightInput.type = "number";
@@ -633,6 +635,7 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, hei
 
 		const widthInputWrapper = document.createElement("div");
 		widthInputWrapper.classList.add("size-input-wrapper");
+		widthInputWrapper.classList.add("width-input-wrapper");
 		const widthInput = document.createElement("input");
 		widthInput.classList.add("size-input");
 		widthInput.type = "number";
@@ -654,6 +657,32 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, hei
 		return layers;
 	} // }}}
 
+	layers.refreshZoomController = function() { // {{{
+		layers.zoomControllerElement.innerHTML = "";
+
+		const zoomInputWrapper = document.createElement("div");
+		zoomInputWrapper.classList.add("zoom-input-wrapper");
+		const zoomInput = document.createElement("input");
+		zoomInput.classList.add("zoom-input");
+		zoomInput.type = "number";
+		zoomInput.value = layers.zoomScale;
+		zoomInput.addEventListener("change", () => {
+			layers.zoom({scale: parseInt(zoomInput.value)}).refresh();
+		});
+
+		zoomInputWrapper.addEventListener("mouseenter", () => {
+			layers.infoTipElement.innerHTML = 'Change canvas zoom.';
+		});
+		zoomInputWrapper.addEventListener("mouseleave", () => {
+			layers.infoTipElement.innerHTML = 'mixx.';
+		});
+
+		zoomInputWrapper.appendChild(zoomInput);
+		layers.zoomControllerElement.appendChild(zoomInputWrapper);
+
+		return layers;
+	} // }}}
+
 	layers.refreshPreviews = function() { // {{{
 		layers.forEach(layer => {
 			layer.refreshPreviewElement();
@@ -667,6 +696,7 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, hei
 			.refreshEasel()
 			.refreshController()
 			.refreshSizeController()
+			.refreshZoomController()
 			.refreshPreviews();
 
 		return layers;
@@ -689,6 +719,7 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, hei
 		layers.controllerElement = controllerElement;
 		layers.infoTipElement = infoTipElement;
 		layers.sizeControllerElement = sizeControllerElement;
+		layers.zoomControllerElement = zoomControllerElement;
 		layers.activeIndex = 1;
 		layers.clear();
 		layers.zoom({scale: 1});

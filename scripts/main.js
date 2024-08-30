@@ -6,6 +6,8 @@ const toolTipElement = document.getElementById('tool-tip');
 const infoTipElement = document.getElementById('info-tip');
 const commandsElement = document.getElementById('commands');
 const sizeElement = document.getElementById('size');
+const zoomElement = document.getElementById('zoom');
+const brushSizeElement = document.getElementById('brush-size');
 const versionElement = document.getElementById('version');
 const toolsElement = document.getElementById('tools');
 const brushColorElement = document.getElementById('brush-color');
@@ -26,7 +28,6 @@ const tolerance = 1;
 
 // VARIABLES {{{
 
-let brushSize = 10;
 let startX = 0;
 let startY = 0;
 let endX = 0;
@@ -56,12 +57,20 @@ function home() {
 
 // }}}
 
+const brush = makeBrush({
+	sizeControllerElement: brushSizeElement,
+	infoTipElement: infoTipElement
+});
+
+brush.refresh();
+
 // LAYERS {{{
 
 const layers = makeLayers({
 	controllerElement: layersElement,
 	easelElement: easelElement,
 	sizeControllerElement: sizeElement,
+	zoomControllerElement: zoomElement,
 	infoTipElement: infoTipElement,
 	height: initialHeight,
 	width: initialWidth
@@ -219,81 +228,6 @@ commands.add({ // redo {{{
 	}
 }); // }}}
 
-commands.add({ // zoom-in {{{
-	name: 'Zoom In',
-	info: 'Zoom in on the easel.',
-	key: '+',
-	iconPath: 'icons/solid/magnifying-glass-plus.svg',
-	func: () => {
-		const scale = layers.zoomScale + 1;
-		layers.zoom({scale}).refresh();
-	}
-}); // }}}
-
-commands.add({ // zoom-out {{{
-	name: 'Zoom Out',
-	info: 'Zoom out on the easel.',
-	key: '-',
-	iconPath: 'icons/solid/magnifying-glass-minus.svg',
-	func: () => {
-		const scale = layers.zoomScale - 1;
-		layers.zoom({scale}).refresh();
-	}
-}); // }}}
-
-commands.add({ // increase-brush-size {{{
-	name: 'Increase Brush Size',
-	info: 'Increase the size of the brush.',
-	key: ']',
-	iconPath: 'icons/solid/maximize.svg',
-	func: () => {
-		brushSize += 2;
-		brushSize = Math.min(Math.max(brushSize, 1), maxBrushSize);
-		console.log(brushSize);
-		layers.getActive()
-			.selectCanvas
-			.clear()
-			.drawEmptyCircle({
-				x: canvasEndX,
-				y: canvasEndY,
-				diameter: brushSize,
-				color: white
-			})
-			.drawPixel({
-				x: canvasEndX,
-				y: canvasEndY,
-				color: white
-			});
-	}
-}); // }}}
-
-commands.add({ // decrease-brush-size {{{
-	name: 'Decrease Brush Size',
-	info: 'Decrease the size of the brush.',
-	iconPath: 'icons/solid/minimize.svg',
-	key: '[',
-	func: () => {
-		brushSize -= 2;
-		brushSize = Math.min(Math.max(brushSize, 1), maxBrushSize);
-		console.log(brushSize);
-		layers.getActive()
-			.selectCanvas
-			.clear()
-			.drawEmptyCircle({
-				x: canvasEndX,
-				y: canvasEndY,
-				diameter: brushSize,
-				color: white
-			})
-			.drawPixel({
-				x: canvasEndX,
-				y: canvasEndY,
-				color: white
-			});
-
-	}
-}); // }}}
-
 commands.refresh();
 
 // }}}
@@ -318,7 +252,7 @@ tools.push(makeTool({ // brush {{{
 			.drawEmptyCircle({
 				x: canvasEndX,
 				y: canvasEndY,
-				diameter: brushSize,
+				diameter: brush.size,
 				color: white
 			})
 			.drawPixel({
@@ -333,7 +267,7 @@ tools.push(makeTool({ // brush {{{
 			.drawCircle({
 				x: canvasEndX,
 				y: canvasEndY,
-				diameter: brushSize,
+				diameter: brush.size,
 				color: brushColor
 			});
 	},
@@ -345,7 +279,7 @@ tools.push(makeTool({ // brush {{{
 				y1: canvasStartY,
 				x2: canvasEndX,
 				y2: canvasEndY,
-				diameter: brushSize,
+				diameter: brush.size,
 				color: brushColor
 			});
 		startX = endX;
@@ -375,7 +309,7 @@ tools.push(makeTool({ // eraser {{{
 			.drawEmptyCircle({
 				x: canvasEndX,
 				y: canvasEndY,
-				diameter: brushSize,
+				diameter: brush.size,
 				color: white
 			})
 			.drawPixel({
@@ -390,7 +324,7 @@ tools.push(makeTool({ // eraser {{{
 			.drawCircle({
 				x: canvasEndX,
 				y: canvasEndY,
-				diameter: brushSize,
+				diameter: brush.size,
 				erase: true
 			});
 	},
@@ -402,7 +336,7 @@ tools.push(makeTool({ // eraser {{{
 				y1: canvasStartY,
 				x2: canvasEndX,
 				y2: canvasEndY,
-				diameter: brushSize,
+				diameter: brush.size,
 				erase: true
 			});
 		startX = endX;
@@ -434,7 +368,7 @@ tools.push(makeTool({ // brush-size {{{
 			.drawEmptyCircle({
 				x: canvasEndX,
 				y: canvasEndY,
-				diameter: brushSize,
+				diameter: brush.size,
 				color: white
 			})
 			.drawPixel({
@@ -444,8 +378,8 @@ tools.push(makeTool({ // brush-size {{{
 			});
 	},
 	mouseDrag: (e) => {
-		brushSize += dX * dBrushSize;
-		brushSize = Math.min(Math.max(brushSize, 1), maxBrushSize);
+		brush.changeSize({size: Math.min(Math.max(brush.size + dX * dBrushSize, 1), maxBrushSize)});
+		brush.refresh();
 		startX = endX;
 	},
 	mouseLeave: (e) => {
@@ -459,6 +393,7 @@ tools.push(makeTool({ // color-picker {{{
     name: 'Color Picker',
     info: 'Select a color from the canvas.',
     key: 'p',
+	quickKey: 'i',
     iconPath: 'icons/solid/eye-dropper.svg',
     mouseMove: (e) => {
         layers.getActive()
@@ -471,11 +406,23 @@ tools.push(makeTool({ // color-picker {{{
             });
     },
     mouseDown: (e) => {
-        if (canvasColor.isOpaque()) {
-            brushColor.copy({color2: canvasColor}).refresh();
-        }
+		startTime = Date.now();
+		interval = setInterval(() => {
+			brushColor.copy({color2: canvasColor}).refresh();
+			if (!isMouseDown) {
+				clearInterval(interval);
+				startTime = Date.now();
+			}
+		}, 50);
+        // if (canvasColor.isOpaque()) {
+        //     brushColor.copy({color2: canvasColor}).refresh();
+        // }
     },
+	mouseUp: (e) => {
+		clearInterval(interval);
+	},
     mouseLeave: (e) => {
+		clearInterval(interval);
         layers.getActive()
             .selectCanvas
             .clear();
@@ -486,6 +433,7 @@ tools.push(makeTool({ // color-mix {{{
 	name: 'color-mix',
 	info: 'Mix the current brush color with the color on the canvas (click and hold).',
 	key: 'x',
+	quickKey: 'v',
 	iconPath: 'icons/solid/mortar-pestle.svg',
 	mouseMove: (e) => {
 		layers.getActive()
@@ -498,6 +446,7 @@ tools.push(makeTool({ // color-mix {{{
 			});
 	},
 	mouseDown: function(e) {
+		console.log('mixxing');
 		tempColor.copy({color2: canvasColor});
 		startTime = Date.now();
 		interval = setInterval(() => {
@@ -523,6 +472,9 @@ tools.push(makeTool({ // color-mix {{{
 	},
 	mouseLeave: function(e) {
 		clearInterval(interval);
+		layers.getActive()
+			.selectCanvas
+			.clear();
 	}
 })); // }}}
 
@@ -611,6 +563,31 @@ tools.push(makeTool({ // resize {{{
 	}
 })); // }}}
 
+var tempScale = 1;
+
+tools.push(makeTool({ // zoom {{{
+	name: 'Zoom',
+	info: 'Zoom in on the easel.',
+	key: 'z',
+	iconPath: 'icons/solid/magnifying-glass.svg',
+	mouseDown: (e) => {
+		tempScale = layers.zoomScale;
+		console.log(tempScale);
+	},
+	mouseDrag: (e) => {
+		tempScale = tempScale + dX / 100;
+		var scale = Math.floor(tempScale);
+		if (scale !== layers.zoomScale) {
+			console.log(scale);
+			layers.zoom({scale}).refreshZoomController();
+		}
+		startX = endX;
+	},
+	mouseUp: (e) => {
+		tempScale = layers.zoomScale;
+		layers.save().refreshPreviews();
+	}
+})); // }}}
 
 tools.refresh();
 
@@ -649,8 +626,8 @@ studioElement.addEventListener('mousemove', (e) => { // {{{
 	}
 
 	toolTipElement.style.display = 'block';
-	toolTipElement.style.left = `${e.clientX + 3}px`;
-	toolTipElement.style.top = `${e.clientY - 16 - 3}px`;
+	toolTipElement.style.left = `${e.clientX}px`;
+	toolTipElement.style.top = `${e.clientY - 16}px`;
 
 }); // }}}
 
@@ -718,9 +695,14 @@ document.addEventListener('keydown', (e) => {
 
 	tools.forEach(tool => {
 		if (tool.key === e.key.toLowerCase()) {
-			console.log(`Key down: ${e.key} activates tool: ${tool.name}`);
 			tools.activate({tool}).refresh();
 			layers.getActive().selectCanvas.clear();
+			isKeyDown = true;
+		}
+		if (tool.quickKey === e.key.toLowerCase()) {
+			tools.activate({tool}).refresh();
+			const mouseEvent = new MouseEvent('mousedown', {});
+			studioElement.dispatchEvent(mouseEvent);
 			isKeyDown = true;
 		}
 	});
@@ -745,6 +727,12 @@ document.addEventListener('keyup', (e) => {
 				layers.getActive().selectCanvas.clear();
 			}
 		}
+		if (tool.quickKey === e.key.toLowerCase()) {
+			const mouseEvent = new MouseEvent('mouseup', {});
+			studioElement.dispatchEvent(mouseEvent);
+			tools.revert().refresh();
+			isKeyDown = false;
+		}
 	});
 
 });
@@ -758,6 +746,14 @@ infoElement.classList.add('info-button');
 infoElement.innerHTML = `<img src="icons/solid/info.svg" alt="info">`;
 infoElement.addEventListener('click', (e) => {
 	window.open('https://github.com/gregoryleeman/mixx', '_blank');
+});
+
+infoElement.addEventListener('mouseenter', (e) => {
+	infoTipElement.innerHTML = 'Documentation.';
+});
+
+infoElement.addEventListener('mouseleave', (e) => {
+	infoTipElement.innerHTML = 'mixx.';
 });
 
 topBarElement.appendChild(infoElement);

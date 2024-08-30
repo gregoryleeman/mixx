@@ -1,4 +1,4 @@
-function makeTool({name, info, key, iconPath, mouseDown=undefined, mouseMove=undefined, mouseDrag=undefined, mouseUp=undefined, mouseLeave=undefined}) {
+function makeTool({name, info, key, quickKey, iconPath, mouseDown=undefined, mouseMove=undefined, mouseDrag=undefined, mouseUp=undefined, mouseLeave=undefined}) {
 	if (!name || !key || !iconPath) {
 		throw new Error("name, key, and iconPath are required to make a tool");
 	}
@@ -9,6 +9,7 @@ function makeTool({name, info, key, iconPath, mouseDown=undefined, mouseMove=und
 		tool.name = name;
 		tool.info = info;
 		tool.key = key;
+		tool.quickKey = quickKey;
 		tool.iconPath = iconPath;
 		tool.mouseDown = mouseDown;
 		tool.mouseMove = mouseMove;
@@ -78,6 +79,7 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 				if (tool.key) {
 					tools.infoTipElement.innerHTML += ` Hotkey: '${tool.key.toUpperCase()}' (temporary: '${tool.key.toLowerCase()}')`;
 				}
+
 			});
 
 			button.addEventListener("mouseleave", () => {
@@ -95,6 +97,12 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 				keyHint.classList.add("key-hint");
 				keyHint.innerHTML = tool.key;
 				button.appendChild(keyHint);
+			}
+			if (tool.quickKey) {
+				const quickKeyHint = document.createElement("div");
+				quickKeyHint.classList.add("quick-key-hint");
+				quickKeyHint.innerHTML = tool.quickKey;
+				button.appendChild(quickKeyHint);
 			}
 
 			tools.controllerElement.appendChild(button);
