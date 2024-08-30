@@ -10,7 +10,30 @@
 	"build": {
 		"appId": "com.mixx.app",
 		"asar": true,
-		"icon": "icons/icon.icns"
+		"mac": {
+			"target": [
+				{
+					"target": "dmg",
+					"arch": [
+					"x64",
+					"arm64",
+					"universal"
+					]
+				},
+				{
+					"target": "zip",
+					"arch": [
+					"x64",
+					"arm64"
+					]
+				}
+			],
+			"icon": "icons/icon.icns"
+		},
+		"win": {
+			"target": "nsis",
+			"icon": "icons/icon_256x256.ico"
+		}
 	},
 	"keywords": [],
 	"author": "",
