@@ -75,7 +75,9 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 
 			button.addEventListener("mouseenter", () => {
 				tools.infoTipElement.innerHTML = tool.info;
-				// tools.infoTipElement.style.display = "block";
+				if (tool.key) {
+					tools.infoTipElement.innerHTML += ` Hotkey: '${tool.key.toUpperCase()}' (temporary: '${tool.key.toLowerCase()}')`;
+				}
 			});
 
 			button.addEventListener("mouseleave", () => {

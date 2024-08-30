@@ -43,6 +43,9 @@ function makeCommands({controllerElement, infoTipElement}) {
 			});
 			button.addEventListener("mouseenter", () => {
 				commands.infoTipElement.innerHTML = command.info;
+				if (command.key) {
+					commands.infoTipElement.innerHTML += ` Hotkey: '${command.key}'.`;
+				}
 			});
 			button.addEventListener("mouseleave", () => {
 				commands.infoTipElement.innerHTML = 'mixx.';

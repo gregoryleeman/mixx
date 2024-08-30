@@ -147,6 +147,10 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, hei
 	layers.save = function() { // {{{
 		const state = layers._serialize();
 		layers.historyStack.push(state);
+
+		if (layers.historyStack.length > 20) {
+			layers.historyStack.shift();
+		}
 		layers.redoStack = [];
 		layers.saveToLocalStorage();
 		console.log("Saving current state to history stack");
@@ -322,7 +326,7 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, hei
 
 	// export and import
 
-	layers.exportPng = function() { // {{{
+	layers.exportPng = async function() { // {{{
 		const mergedCanvas = document.createElement('canvas');
 		mergedCanvas.width = layers.width;
 		mergedCanvas.height = layers.height;
@@ -333,18 +337,131 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, hei
 			mergedCtx.drawImage(layer.drawCanvas, 0, 0);
 		});
 
-		const pngDataUrl = mergedCanvas.toDataURL('image/png');
+		    if (window.showSaveFilePicker) {
+        // Use File System Access API if supported
+        try {
+            // Convert the canvas to a Blob
+            const pngBlob = await new Promise(resolve => mergedCanvas.toBlob(resolve, 'image/png'));
 
-		const link = document.createElement('a');
-		link.href = pngDataUrl;
-		link.download = 'layers.png';
-		document.body.appendChild(link);
-		link.click();
-		document.body.removeChild(link);
+            const fileHandle = await window.showSaveFilePicker({
+                suggestedName: 'layers.png',
+                types: [{
+                    description: 'PNG Files',
+                    accept: { 'image/png': ['.png'] }
+                }]
+            });
+
+            const writableStream = await fileHandle.createWritable();
+            await writableStream.write(pngBlob);
+            await writableStream.close();
+        } catch (error) {
+            console.error("Error saving PNG file:", error);
+        }
+    } else {
+        // Fallback for browsers that do not support the File System Access API
+        const pngDataUrl = mergedCanvas.toDataURL('image/png');
+        const link = document.createElement('a');
+        link.href = pngDataUrl;
+        link.download = 'layers.png'; // Default file name
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+
+    return layers;
 
 		return layers;
 	}; // }}}
 
+	layers.exportBlob = async function() { // {{{
+		const state = JSON.stringify(layers._serialize());
+
+		// Create a blob from the serialized state
+		const blob = new Blob([state], { type: 'application/json' });
+
+		// Check if the File System Access API is supported
+		if (window.showSaveFilePicker) {
+			try {
+				// Open the file save dialog
+				const fileHandle = await window.showSaveFilePicker({
+					suggestedName: 'mixx.json',
+					types: [{
+						description: 'JSON Files',
+						accept: { 'application/json': ['.json'] }
+					}]
+				});
+
+				// Create a writable stream to the file
+				const writableStream = await fileHandle.createWritable();
+
+				// Write the blob to the file
+				await writableStream.write(blob);
+
+				// Close the writable stream
+				await writableStream.close();
+			} catch (error) {
+				console.error("Error saving file:", error);
+			}
+		} else {
+			console.log("Fallback for browsers that do not support the File System Access API");
+			// Fallback for browsers that do not support the File System Access API
+			const link = document.createElement('a');
+			link.href = URL.createObjectURL(blob);
+			link.download = 'mixx.json'; // Default file name
+
+			// Trigger the download
+			document.body.appendChild(link);
+			link.click();
+
+			// Clean up
+			document.body.removeChild(link);
+			URL.revokeObjectURL(link.href);
+		}
+	}; // }}}
+
+	layers.importBlob = function() { // {{{
+		// Create a hidden file input element
+		const fileInput = document.createElement('input');
+		fileInput.type = 'file';
+		fileInput.style.display = 'none'; // Hide the input
+
+		// Add an event listener to handle the file selection
+		fileInput.addEventListener('change', function(event) {
+			const file = event.target.files[0]; // Get the selected file
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function(e) {
+					try {
+						const state = JSON.parse(e.target.result); // Parse the JSON content
+						layers._deserialize({ state }); // Deserialize into the application state
+
+						// Clear history and redo stacks after importing new layers
+						layers.historyStack = [];
+						layers.redoStack = [];
+
+						// Save the imported state to local storage
+						layers.saveToLocalStorage();
+						layers.updateActive().refresh();
+
+						console.log("Layers successfully imported from file.");
+					} catch (error) {
+						console.error("Error importing layers from file:", error);
+					}
+				};
+
+				reader.readAsText(file); // Read the file content as text
+			}
+
+			// Cleanup: Remove the file input from the DOM
+			document.body.removeChild(fileInput);
+		});
+
+		// Append the file input to the body
+		document.body.appendChild(fileInput);
+
+		// Programmatically trigger a click on the file input to open the file chooser
+		fileInput.click();
+	}; // }}}
 
 	// refresh
 
@@ -372,14 +489,17 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, hei
 			controllerElement.appendChild(previewElement);
 
 			if(layer !== layers[0]) {
+				previewElement.style.cursor = "pointer";
 				previewElement.addEventListener("click", () => {
 					layers.activate({layer}).refreshController().refreshEasel();
 				});
 				previewElement.addEventListener("mouseenter", () => {
 					layers.infoTipElement.innerHTML = 'Select layer.';
+					controllerElement.classList.add("hover");
 				});
 				previewElement.addEventListener("mouseleave", () => {
 					layers.infoTipElement.innerHTML = 'mixx.';
+					controllerElement.classList.remove("hover");
 				});
 
 				const moveButtons = document.createElement("div");

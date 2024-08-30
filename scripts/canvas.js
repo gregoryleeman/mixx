@@ -188,44 +188,44 @@ canvas.drawCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 
     return canvas;
 };
 
-canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) {
-    if (diameter <= 1) {
-        canvas.drawPixel({x, y, color, erase});
-        return canvas;
-    }
-    canvas.drawCircle({x, y, diameter, color, erase});
-	canvas.drawCircle({x, y, diameter: diameter - 2, color, erase: true});
-    return canvas;
-};
-
-
-
-
-
-
-
 // canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) {
-//     if (diameter === 1) {
+//     if (diameter <= 1) {
 //         canvas.drawPixel({x, y, color, erase});
 //         return canvas;
 //     }
-
-//     let radius = Math.floor(diameter / 2);
-//     let radiusSquared = radius * radius;
-
-//     for (let y1 = -radius; y1 <= radius; y1++) {
-//         for (let x1 = -radius; x1 <= radius; x1++) {
-//             let distanceSquared = x1 * x1 + y1 * y1;
-
-//             // Check if the point is exactly on the circumference of the filled circle
-//             if (distanceSquared >= radiusSquared - radius && distanceSquared < radiusSquared) {
-//                 canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
-//             }
-//         }
-//     }
-
+//     canvas.drawCircle({x, y, diameter, color, erase});
+// 	canvas.drawCircle({x, y, diameter: diameter - 2, color, erase: true});
 //     return canvas;
 // };
+
+
+
+
+
+
+
+canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) {
+    if (diameter === 1) {
+        canvas.drawPixel({x, y, color, erase});
+        return canvas;
+    }
+
+    let radius = Math.floor(diameter / 2);
+    let radiusSquared = radius * radius;
+
+    for (let y1 = -radius; y1 <= radius; y1++) {
+        for (let x1 = -radius; x1 <= radius; x1++) {
+            let distanceSquared = x1 * x1 + y1 * y1;
+
+            // Check if the point is exactly on the circumference of the filled circle
+            if (distanceSquared >= radiusSquared - radius && distanceSquared < radiusSquared) {
+                canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+            }
+        }
+    }
+
+    return canvas;
+};
 
 	
 

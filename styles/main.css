@@ -1,16 +1,21 @@
 :root {
 	--white: #FFFFFF;
-	--button: #DDE4E7;
-	--hover: #B3BBBD;
-	--active: #8F9598;
-	--background: #949C9E;
+	--lightgrey: #DDE4E7;
+	--grey: #B3BBBD;
+	--darkgrey: #8F9598;
+	--darkergrey: #727575;
 	--black: #000000;
 }
 
+@font-face {
+	font-family: 'VT323';
+	src: url('VT323-Regular.ttf') format('truetype');
+}
 
 * {
 	box-sizing: border-box;
 	font-family: 'VT323', monospace;
+	font-size: 16px;
 }
 
 body {
@@ -20,7 +25,7 @@ body {
 	flex-direction: column;
 	height: 100vh;
 	width: 100vw;
-	background-color: var(--background);
+	background-color: var(--darkgrey);
 	color: var(--black);
 }
 
@@ -52,12 +57,12 @@ body {
 
 #top-bar, #left-bar, #right-bar, #bottom-bar {
 	z-index: 2;
-	background-color: var(--button);
+	background-color: var(--lightgrey);
 	display: flex;
-	gap: 8px;
+	gap: 4px;
 	justify-content: flex-start;
 	flex-wrap: wrap;
-	padding: 8px;
+	padding: 4px;
 }
 
 #top-bar, #bottom-bar {
@@ -73,25 +78,29 @@ body {
 #commands, #colors {
 	display: flex;
 	flex-direction: row;
-	gap: 8px;
+	flex-wrap: wrap;
+	gap: 4px;
 }
 
 #tools {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: 4px;
 }
 
 #studio {
 	flex-grow: 1;
 	height: 100%;
-	border: 1px solid;
+	border-top: 2px solid var(--darkergrey);
+	border-left: 2px solid var(--darkergrey);
+	border-bottom: 2px solid var(--white);
+	border-right: 2px solid var(--white);
 	cursor: none;
 }
 
 #easel {
 	position: absolute;
-	border: 1px solid;
+	border: 1px solid var(--darkergrey);
 	z-index: -1;
 }
 
@@ -102,26 +111,38 @@ canvas {
 }
 
 .button {
-	background-color: var(--button);
-	border: 1px solid;
-	border-radius: 3px;
+	background-color: var(--lightgrey);
+	border-bottom: 2px solid var(--darkgrey);
+	border-right: 2px solid var(--darkgrey);
+	border-top: 2px solid var(--white);
+	border-left: 2px solid var(--white);
+	/* border-radius: 3px; */
 	cursor: pointer;
 }
 
 .button:hover {
-	background-color: var(--hover);
+	background-color: var(--grey);
 }
 
 .button.active, .button:active {
-	background-color: var(--active);
+	background-color: var(--grey);
+	border-bottom: 2px solid var(--white);
+	border-right: 2px solid var(--white);
+	border-top: 2px solid var(--darkgrey);
+	border-left: 2px solid var(--darkgrey);
 }
 
 .tool-button, .command-button {
 	position: relative;
-	width: 32px;
-	height: 32px;
-	padding: 4px;
-
+	width: 38px;
+	height: 38px;
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: center;
+}
+.info-button {
+	justify-self: flex-end !important;
 }
 
 .tool-button > img, .command-button > img {
@@ -134,7 +155,6 @@ canvas {
 	display: block;
 	position: absolute;
 	line-height: 12px;
-	font-size: 12px;
 	top: 0;
 	left: 2px;
 	color: var(--white);
@@ -148,48 +168,64 @@ canvas {
 
 
 .puck, #brush-color, #canvas-color {
-	width: 32px;
-	height: 32px;
-	border: 1px solid;
+	width: 38px;
+	height: 38px;
+	border-top: 2px solid var(--darkgrey);
+	border-left: 2px solid var(--darkgrey);
+	border-bottom: 2px solid var(--white);
+	border-right: 2px solid var(--white);
 	border-radius: 3px;
 }
 
 #layers {
-	background-color: var(--background);
-	border: 1px solid;
-	padding: 1px;
+	background-color: var(--darkgrey);
+	border-top: 2px solid var(--darkergrey);
+	border-left: 2px solid var(--darkergrey);
+	border-bottom: 2px solid var(--white);
+	border-right: 2px solid var(--white);
 	height: 100%;
 	display: flex;
 	flex-direction: column-reverse;
 	justify-content: flex-start;
-	gap: 1px;
 	overflow-y: scroll;
 	min-height: 0;
 }
 
 .layer {
-	width: 96px;
-	height: 48px;
-	background-color: var(--button);
-	border: 1px solid;
-	border-radius: 3px;
+	width: 100px;
+	height: 54px;
+	background-color: var(--lightgrey);
+	border-top: 2px solid var(--white);
+	border-left: 2px solid var(--white);
+	border-bottom: 2px solid var(--darkgrey);
+	border-right: 2px solid var(--darkgrey);
 	display: flex;
 	flex-direction: row;
 	gap: 4px;
 	padding: 4px;
 }
 
+.layer.hover {
+	background-color: var(--grey);
+}
+
 .layer.active {
-	background-color: var(--active);
+	background-color: var(--grey);
+	border-top: 2px solid var(--darkergrey);
+	border-left: 2px solid var(--darkergrey);
+	border-bottom: 2px solid var(--lightgrey);
+	border-right: 2px solid var(--lightgrey);
 }
 
 .layer-preview {
-	width: 38px;
-	height: 38px;
-	background-color: var(--background);
-	border: 1px solid;
+	width: 42px;
+	height: 42px;
+	background-color: var(--darkgrey);
+	border-top: 2px solid var(--darkergrey);
+	border-left: 2px solid var(--darkergrey);
+	border-bottom: 2px solid var(--white);
+	border-right: 2px solid var(--white);
 	flex-shrink: 0;
-	cursor: pointer;
 }
 
 .layer-merge-buttons, .layer-move-buttons {
@@ -201,11 +237,9 @@ canvas {
 }
 
 .layer-move-button, .layer-merge-button, .layer-delete-button {
-	border: 1px solid;
 	min-height: 0;
 	flex-grow: 1;
 	flex-shrink: 1;
-	border-radius: 3px;
 }
 
 .layer-add-button {
@@ -214,9 +248,7 @@ canvas {
 	justify-content: center;
 	width: 100%;
 	height: 18px;
-	background-color: var(--button);
-	border: 1px solid;
-	border-radius: 3px;
+	background-color: var(--lightgrey);
 	padding: 1px;
 }
 .layer-add-button > img {
@@ -246,14 +278,19 @@ canvas {
 #size {
 	display: flex;
 	flex-direction: row;
-	gap: 8px;
+	gap: 4px;
+	flex-wrap: wrap;
 }
 
 .size-input {
 	display: block;
 	font-size: 24px;
+	border-top: 2px solid var(--darkgrey);
+	border-left: 2px solid var(--darkgrey);
+	border-bottom: 2px solid var(--white);
+	border-right: 2px solid var(--white);
 	width: 64px;
-	height: 32px;
+	height: 38px;
 	/* -moz-appearance: textfield; */
 }
 
@@ -275,9 +312,16 @@ canvas {
 }
 
 #info-tip {
-	height: 12px;
 	padding-left: 8px;
-	padding-top: 2px;
-	background-color: var(--button);
+	padding-top: 4px;
+	background-color: var(--lightgrey);
 	z-index: 5;
+}
+
+#version {
+	position: absolute;
+	top: 0;
+	right: 0;
+	padding: 4px;
+	z-index: 6;
 }
