@@ -9,7 +9,7 @@ const sizeElement = document.getElementById('size');
 const zoomElement = document.getElementById('zoom');
 const brushSizeElement = document.getElementById('brush-size');
 const versionElement = document.getElementById('version');
-const toolsElement = document.getElementById('tools');
+const leftBarElement = document.getElementById('left-bar');
 const brushColorElement = document.getElementById('brush-color');
 const canvasColorElement = document.getElementById('canvas-color');
 const studioElement = document.getElementById('studio');
@@ -44,6 +44,7 @@ let isKeyDown = false;
 let isMouseDown = false;
 let interval;
 let startTime;
+var tempScale = 1;
 
 // }}}
 
@@ -235,7 +236,7 @@ commands.refresh();
 // TOOLS {{{
 
 const tools = makeTools({
-	controllerElement: toolsElement,
+	controllerElement: leftBarElement,
 	toolTipElement: toolTipElement,
 	infoTipElement: infoTipElement
 });
@@ -247,7 +248,7 @@ tools.push(makeTool({ // brush {{{
 	iconPath: 'icons/solid/pen.svg',
 	mouseMove: (e) => {
 		layers.getActive()
-			.selectCanvas
+			.cursorCanvas
 			.clear()
 			.drawEmptyCircle({
 				x: canvasEndX,
@@ -292,7 +293,7 @@ tools.push(makeTool({ // brush {{{
 	},
 	mouseLeave: (e) => {
 		layers.getActive()
-			.selectCanvas
+			.cursorCanvas
 			.clear();
 	}
 })); // }}}
@@ -304,7 +305,7 @@ tools.push(makeTool({ // eraser {{{
 	iconPath: 'icons/solid/eraser.svg',
 	mouseMove: (e) => {
 		layers.getActive()
-			.selectCanvas
+			.cursorCanvas
 			.clear()
 			.drawEmptyCircle({
 				x: canvasEndX,
@@ -351,7 +352,7 @@ tools.push(makeTool({ // eraser {{{
 	},
 	mouseLeave: (e) => {
 		layers.getActive()
-			.selectCanvas
+			.cursorCanvas
 			.clear();
 	}
 })); // }}}
@@ -363,7 +364,7 @@ tools.push(makeTool({ // brush-size {{{
 	iconPath: 'icons/regular/circle-dot.svg',
 	mouseMove: (e) => {
 		layers.getActive()
-			.selectCanvas
+			.cursorCanvas
 			.clear()
 			.drawEmptyCircle({
 				x: canvasEndX,
@@ -384,7 +385,7 @@ tools.push(makeTool({ // brush-size {{{
 	},
 	mouseLeave: (e) => {
 		layers.getActive()
-			.selectCanvas
+			.cursorCanvas
 			.clear();
 	}
 })); // }}}
@@ -397,7 +398,7 @@ tools.push(makeTool({ // color-picker {{{
     iconPath: 'icons/solid/eye-dropper.svg',
     mouseMove: (e) => {
         layers.getActive()
-            .selectCanvas
+            .cursorCanvas
             .clear()
             .drawCrossHairs({
                 x: canvasEndX,
@@ -424,7 +425,7 @@ tools.push(makeTool({ // color-picker {{{
     mouseLeave: (e) => {
 		clearInterval(interval);
         layers.getActive()
-            .selectCanvas
+            .cursorCanvas
             .clear();
     }
 })); // }}}
@@ -437,7 +438,7 @@ tools.push(makeTool({ // color-mix {{{
 	iconPath: 'icons/solid/mortar-pestle.svg',
 	mouseMove: (e) => {
 		layers.getActive()
-			.selectCanvas
+			.cursorCanvas
 			.clear()
 			.drawCrossHairs({
 				x: canvasEndX,
@@ -446,7 +447,6 @@ tools.push(makeTool({ // color-mix {{{
 			});
 	},
 	mouseDown: function(e) {
-		console.log('mixxing');
 		tempColor.copy({color2: canvasColor});
 		startTime = Date.now();
 		interval = setInterval(() => {
@@ -473,7 +473,7 @@ tools.push(makeTool({ // color-mix {{{
 	mouseLeave: function(e) {
 		clearInterval(interval);
 		layers.getActive()
-			.selectCanvas
+			.cursorCanvas
 			.clear();
 	}
 })); // }}}
@@ -485,7 +485,7 @@ tools.push(makeTool({ // bucket {{{
 	iconPath: 'icons/solid/fill.svg',
 	mouseMove: (e) => {
 		layers.getActive()
-			.selectCanvas
+			.cursorCanvas
 			.clear()
 			.drawCrossHairs({
 				x: canvasEndX,
@@ -505,7 +505,7 @@ tools.push(makeTool({ // bucket {{{
 	},
 	mouseLeave: (e) => {
 		layers.getActive()
-			.selectCanvas
+			.cursorCanvas
 			.clear();
 	}
 })); // }}}
@@ -525,8 +525,8 @@ tools.push(makeTool({ // move {{{
 	}
 })); // }}}
 
-tools.push(makeTool({ // content-move {{{
-	name: 'Content Move',
+tools.push(makeTool({ // hand {{{
+	name: 'Hand',
 	info: 'Move the content of the active canvas.',
 	key: 'h',
 	iconPath: 'icons/regular/hand.svg',
@@ -546,10 +546,586 @@ tools.push(makeTool({ // content-move {{{
 	}
 })); // }}}
 
+tools.push(makeTool({ // line {{{
+	name: 'Line',
+	info: 'Draw a line.',
+	iconPath: 'icons/solid/minus.svg',
+	mouseMove: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear()
+			.drawCrossHairs({
+				x: canvasEndX,
+				y: canvasEndY,
+				color: white
+			});
+	},
+	mouseDrag: (e) => {
+		layers.getActive()
+			.tempCanvas
+			.clear()
+			.drawLineWithPixels({
+				x1: canvasStartX,
+				y1: canvasStartY,
+				x2: canvasEndX,
+				y2: canvasEndY,
+				color: brushColor
+			});
+	},
+	mouseUp: (e) => {
+		layers.getActive()
+			.drawCanvas
+			.drawLineWithPixels({
+				x1: canvasStartX,
+				y1: canvasStartY,
+				x2: canvasEndX,
+				y2: canvasEndY,
+				color: brushColor
+			});
+		layers.getActive().tempCanvas.clear();
+		layers.refreshPreviews().save();
+	},
+	mouseLeave: (e) => {
+		layers.getActive().cursorCanvas.clear();
+	}
+})); // }}}
+
+var polygonStart = false
+var polygonStartX
+var polygonStartY
+
+// tools.push(makeTool({ // polygon {{{
+// 	name: 'Polygon',
+// 	info: 'Draw a polygon.',
+// 	iconPath: 'icons/solid/star.svg',
+// 	mouseMove: (e) => {
+// 		layers.getActive()
+// 			.cursorCanvas
+// 			.clear()
+// 			.drawCrossHairs({
+// 				x: canvasEndX,
+// 				y: canvasEndY,
+// 				color: white
+// 			});
+// 		if (polygonStart) {
+// 			layers.getActive().selectCanvas.clear().drawLineWithPixels({
+// 				x1: canvasStartX,
+// 				y1: canvasStartY,
+// 				x2: canvasEndX,
+// 				y2: canvasEndY,
+// 				color: white
+// 			});
+// 		}
+// 	},
+// 	mouseDown: (e) => {
+// 		const mask = layers.getActive().selectCanvas.getData();
+// 		layers.getActive().tempCanvas.fill({maskData: mask, color: brushColor});
+// 		if (!polygonStart) {
+// 			polygonStart = true;
+// 			polygonStartX = canvasStartX;
+// 			polygonStartY = canvasStartY;
+// 		} else {
+// 			if (Math.abs(canvasEndX - polygonStartX) < tolerance && Math.abs(canvasEndY - polygonStartY) < tolerance) {
+// 				console.log("test");
+// 				const fillMask = layers.getActive().tempCanvas.maskFill({data: layers.getActive.tempCanvas.getData()});
+// 				layers.getActive().drawCanvas.fill({maskData: fillMask, color: brushColor});
+// 				polygonStart = false;
+// 			}
+// 		}
+// 	}
+// })); // }}}
+
+
+tools.push(makeTool({ // rectangle {{{
+	name: 'Rectangle',
+	info: 'Draw a rectangle.',
+	iconPath: 'icons/solid/square-full.svg',
+	mouseMove: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear()
+			.drawCrossHairs({
+				x: canvasEndX,
+				y: canvasEndY,
+				color: white
+			});
+	},
+	mouseDrag: (e) => {
+		layers.getActive()
+			.tempCanvas
+			.clear()
+			.drawRect({
+				x: canvasStartX,
+				y: canvasStartY,
+				width: canvasDX,
+				height: canvasDY,
+				color: brushColor
+			});
+	},
+	mouseUp: (e) => {
+		layers.getActive()
+			.drawCanvas
+			.drawRect({
+				x: canvasStartX,
+				y: canvasStartY,
+				width: canvasDX,
+				height: canvasDY,
+				color: brushColor
+			});
+		layers.getActive()
+			.tempCanvas
+			.clear();
+		layers.refreshPreviews().save();
+	},
+	mouseLeave: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear();
+	}
+})); // }}}
+
+tools.push(makeTool({ // erase rectangle {{{
+	name: 'Erase Rectangle',
+	info: 'Erase a rectangle.',
+	iconPath: 'icons/regular/square-full.svg',
+	subIconPath: 'icons/solid/eraser.svg',
+	mouseMove: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear()
+			.drawCrossHairs({
+				x: canvasEndX,
+				y: canvasEndY,
+				color: white
+			});
+	},
+	mouseDrag: (e) => {
+		layers.getActive()
+			.selectCanvas
+			.clear()
+			.drawRect({
+				x: canvasStartX,
+				y: canvasStartY,
+				width: canvasDX,
+				height: canvasDY,
+				color: white
+			});
+	},
+	mouseUp: (e) => {
+		layers.getActive()
+			.drawCanvas
+			.drawRect({
+				x: canvasStartX,
+				y: canvasStartY,
+				width: canvasDX,
+				height: canvasDY,
+				erase: true
+			});
+		layers.getActive()
+			.selectCanvas
+			.clear();
+		layers.refreshPreviews().save();
+	},
+	mouseLeave: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear();
+	}
+})); // }}}
+
+tools.push(makeTool({ // extract rectangle {{{
+	name: 'Extract Rectangle',
+	info: 'Extract a rectangle to a new layer.',
+	iconPath: 'icons/regular/square-full.svg',
+	subIconPath: 'icons/solid/scissors.svg',
+	mouseMove: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear()
+			.drawCrossHairs({
+				x: canvasEndX,
+				y: canvasEndY,
+				color: white
+			});
+	},
+	mouseDrag: (e) => {
+		layers.getActive()
+			.selectCanvas
+			.clear()
+			.drawEmptyRectangle({
+				x: canvasStartX,
+				y: canvasStartY,
+				width: canvasDX,
+				height: canvasDY,
+				color: white
+			});
+	},
+	mouseUp: (e) => {
+		const mask = layers.getActive().selectCanvas.rectFill({x: canvasStartX, y: canvasStartY, width: canvasDX, height: canvasDY});
+		const lift = layers.getActive().drawCanvas.lift({maskData: mask});
+		layers.getActive().selectCanvas._path = [];
+		layers.getActive().selectCanvas._pathComplete = false;
+		layers.getActive().selectCanvas.clear();
+		layers.getActive().cursorCanvas.clear();
+		layers.add();
+		layers.getActive().drawCanvas.stamp({maskData: lift});
+		layers.save().refresh();
+		tools.activateByName({name: 'Hand'}).refresh();
+	},
+	mouseLeave: (e) => {
+		layers.getActive().selectCanvas.clear();
+		layers.getActive().cursorCanvas.clear();
+	}
+})); // }}}
+
+tools.push(makeTool({ // freeform {{{
+	name: 'Freeform',
+	info: 'Draw a freeform shape.',
+	iconPath: 'icons/solid/star.svg',
+	mouseMove: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear()
+			.drawCrossHairs({
+				x: canvasEndX,
+				y: canvasEndY,
+				color: white
+			});
+	},
+	mouseDown: (e) => {
+		layers.getActive()
+			.tempCanvas
+			._path = [];
+		layers.getActive()
+			.tempCanvas
+			._pathComplete = false;
+	},
+	mouseDrag: (e) => {
+		layers.getActive()
+			.tempCanvas
+			.drawLineWithPixels({
+				x1: canvasStartX,
+				y1: canvasStartY,
+				x2: canvasEndX,
+				y2: canvasEndY,
+				color: brushColor
+			});
+		startX = endX;
+		startY = endY;
+		canvasStartX = canvasEndX;
+		canvasStartY = canvasEndY;
+		// if (layers.getActive().tempCanvas._pathComplete) {
+		// 	const mask = layers.getActive().tempCanvas.pathFill({path: layers.getActive().tempCanvas._path});
+		// 	layers.getActive().drawCanvas.fill({maskData: mask, color: brushColor});
+		// 	layers.getActive().tempCanvas._path = [];
+		// 	layers.getActive().tempCanvas._pathComplete = false;
+		// 	layers.getActive().tempCanvas.clear();
+		// 	isMouseDown = false;
+		// }
+	},
+	mouseUp: (e) => {
+		// if (!layers.getActive().tempCanvas._pathComplete) {
+			const pathStart = layers.getActive().tempCanvas._path[0];
+			console.log({pathStart});
+			layers.getActive().tempCanvas.drawLineWithPixels({x1: canvasEndX, y1: canvasEndY, x2: pathStart.x, y2: pathStart.y, color: brushColor});
+			const mask = layers.getActive().tempCanvas.pathFill({path: layers.getActive().tempCanvas._path});
+			layers.getActive().drawCanvas.fill({maskData: mask, color: brushColor});
+		// }
+		layers.getActive().tempCanvas._path = [];
+		layers.getActive().tempCanvas._pathComplete = false;
+		layers.getActive().tempCanvas.clear();
+		layers.refreshPreviews().save();
+	},
+	mouseLeave: (e) => {
+		layers.getActive().tempCanvas._path = [];
+		layers.getActive().tempCanvas._pathComplete = false;
+		layers.getActive().tempCanvas.clear();
+		layers.refreshPreviews().save();
+	}
+})); // }}}
+
+tools.push(makeTool({ // erase freeform {{{
+	name: 'Freeform',
+	info: 'Erase a freeform shape',
+	iconPath: 'icons/regular/star.svg',
+	subIconPath: 'icons/solid/eraser.svg',
+	mouseMove: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear()
+			.drawCrossHairs({
+				x: canvasEndX,
+				y: canvasEndY,
+				color: white
+			});
+	},
+	mouseDown: (e) => {
+		layers.getActive()
+			.selectCanvas
+			._path = [];
+		layers.getActive()
+			.selectCanvas
+			._pathComplete = false;
+	},
+	mouseDrag: (e) => {
+		layers.getActive()
+			.selectCanvas
+			.drawLineWithPixels({
+				x1: canvasStartX,
+				y1: canvasStartY,
+				x2: canvasEndX,
+				y2: canvasEndY,
+				color: white
+			});
+		startX = endX;
+		startY = endY;
+		canvasStartX = canvasEndX;
+		canvasStartY = canvasEndY;
+		// if (layers.getActive().selectCanvas._pathComplete) {
+		// 	const mask = layers.getActive().selectCanvas.pathFill({path: layers.getActive().selectCanvas._path});
+		// 	layers.getActive()
+		// 		.drawCanvas
+		// 		.fill({maskData: mask, erase: true});
+		// 	layers.getActive().selectCanvas._path = [];
+		// 	layers.getActive().selectCanvas._pathComplete = false;
+		// 	layers.getActive().selectCanvas.clear();
+		// 	isMouseDown = false;
+		// }
+	},
+	mouseUp: (e) => {
+		if (!layers.getActive().selectCanvas._pathComplete) {
+			const pathStart = layers.getActive().selectCanvas._path[0];
+			layers.getActive().selectCanvas.drawLineWithPixels({x1: canvasEndX, y1: canvasEndY, x2: pathStart.x, y2: pathStart.y, color: brushColor});
+			const mask = layers.getActive().selectCanvas.pathFill({path: layers.getActive().selectCanvas._path});
+			layers.getActive().drawCanvas.fill({maskData: mask, erase: true});
+			layers.refreshPreviews().save();
+		}
+		layers.getActive().selectCanvas._path = [];
+		layers.getActive().selectCanvas._pathComplete = false;
+		layers.getActive().selectCanvas.clear();
+	},
+	mouseLeave: (e) => {
+		layers.getActive().selectCanvas._path = [];
+		layers.getActive().selectCanvas._pathComplete = false;
+		layers.getActive().selectCanvas.clear();
+	}
+})); // }}}
+
+tools.push(makeTool({ // extract freeform {{{
+	name: 'Extract',
+	info: 'Extract a freeform shape to a new layer.',
+	iconPath: 'icons/regular/star.svg',
+	subIconPath: 'icons/solid/scissors.svg',
+	mouseMove: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear()
+			.drawCrossHairs({
+				x: canvasEndX,
+				y: canvasEndY,
+				color: white
+			});
+	},
+	mouseDown: (e) => {
+		layers.getActive()
+			.selectCanvas
+			._path = [];
+		layers.getActive()
+			.selectCanvas
+			._pathComplete = false;
+	},
+	mouseDrag: (e) => {
+		layers.getActive()
+			.selectCanvas
+			.drawLineWithPixels({
+				x1: canvasStartX,
+				y1: canvasStartY,
+				x2: canvasEndX,
+				y2: canvasEndY,
+				color: white
+			});
+		startX = endX;
+		startY = endY;
+		canvasStartX = canvasEndX;
+		canvasStartY = canvasEndY;
+		// if (layers.getActive().selectCanvas._pathComplete) {
+		// 	const mask = layers.getActive().selectCanvas.pathFill({path: layers.getActive().selectCanvas._path});
+		// 	const lift = layers.getActive().drawCanvas.lift({maskData: mask});
+		// 	layers.getActive().selectCanvas._path = [];
+		// 	layers.getActive().selectCanvas._pathComplete = false;
+		// 	layers.getActive().selectCanvas.clear();
+		// 	layers.getActive().cursorCanvas.clear();
+		// 	layers.add();
+		// 	layers.getActive().drawCanvas.stamp({maskData: lift});
+		// 	layers.save().refresh();
+		// 	isMouseDown = false;
+		// 	tools.activateByName({name: 'Hand'}).refresh();
+		// }
+	},
+	mouseUp: (e) => {
+		if (!layers.getActive().selectCanvas._pathComplete) {
+			const pathStart = layers.getActive().selectCanvas._path[0];
+			layers.getActive().selectCanvas.drawLineWithPixels({x1: canvasEndX, y1: canvasEndY, x2: pathStart.x, y2: pathStart.y, color: brushColor});
+			const mask = layers.getActive().selectCanvas.pathFill({path: layers.getActive().selectCanvas._path});
+			const lift = layers.getActive().drawCanvas.lift({maskData: mask});
+			layers.getActive().selectCanvas._path = [];
+			layers.getActive().selectCanvas._pathComplete = false;
+			layers.getActive().selectCanvas.clear();
+			layers.getActive().cursorCanvas.clear();
+			layers.add();
+			layers.getActive().drawCanvas.stamp({maskData: lift});
+			layers.save().refresh();
+			tools.activateByName({name: 'Hand'}).refresh();
+		}
+	},
+	mouseLeave: (e) => {
+		layers.getActive().selectCanvas._path = [];
+		layers.getActive().selectCanvas._pathComplete = false;
+		layers.getActive().selectCanvas.clear();
+		layers.refreshPreviews().save();
+	}
+})); // }}}
+
+tools.push(makeTool({ // ellipse {{{
+	name: 'Ellipse',
+	info: 'Draw an ellipse.',
+	iconPath: 'icons/solid/circle.svg',
+	mouseMove: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear()
+			.drawCrossHairs({
+				x: canvasEndX,
+				y: canvasEndY,
+				color: white
+			});
+	},
+	mouseDrag: (e) => {
+		layers.getActive()
+			.tempCanvas
+			.clear()
+			.drawEllipse({
+				x: canvasStartX,
+				y: canvasStartY,
+				width: canvasDX,
+				height: canvasDY,
+				color: brushColor
+			});
+	},
+	mouseUp: (e) => {
+		layers.getActive().drawCanvas.drawEllipse({x: canvasStartX, y: canvasStartY, width: canvasDX, height: canvasDY, color: brushColor});
+		layers.getActive().tempCanvas.clear();
+		layers.refreshPreviews().save();
+	},
+	mouseLeave: (e) => {
+		layers.getActive().cursorCanvas.clear();
+	}
+})); // }}}
+
+tools.push(makeTool({ // erase ellipse {{{
+	name: 'Erase Ellipse',
+	info: 'Erase an ellipse.',
+	iconPath: 'icons/regular/circle.svg',
+	subIconPath: 'icons/solid/eraser.svg',
+	mouseMove: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear()
+			.drawCrossHairs({
+				x: canvasEndX,
+				y: canvasEndY,
+				color: white
+			});
+	},
+	mouseDrag: (e) => {
+		layers.getActive()
+			.selectCanvas
+			.clear()
+			.drawEllipse({
+				x: canvasStartX,
+				y: canvasStartY,
+				width: canvasDX,
+				height: canvasDY,
+				color: white
+			});
+	},
+	mouseUp: (e) => {
+		layers.getActive().drawCanvas.drawEllipse({x: canvasStartX, y: canvasStartY, width: canvasDX, height: canvasDY, erase: true});
+		layers.getActive().selectCanvas.clear();
+		layers.refreshPreviews().save();
+	},
+	mouseLeave: (e) => {
+		layers.getActive().cursorCanvas.clear();
+	}
+})); // }}}
+
+tools.push(makeTool({ // extract ellipse {{{
+	name: 'Extract Ellipse',
+	info: 'Extract an ellipse to a new layer.',
+	iconPath: 'icons/regular/circle.svg',
+	subIconPath: 'icons/solid/scissors.svg',
+	mouseMove: (e) => {
+		layers.getActive()
+			.cursorCanvas
+			.clear()
+			.drawCrossHairs({
+				x: canvasEndX,
+				y: canvasEndY,
+				color: white
+			});
+	},
+	mouseDrag: (e) => {
+		layers.getActive()
+			.selectCanvas
+			.clear()
+			.drawEllipse({
+				x: canvasStartX,
+				y: canvasStartY,
+				width: canvasDX,
+				height: canvasDY,
+				color: white
+			});
+	},
+	mouseUp: (e) => {
+		const mask = layers.getActive().selectCanvas.getData();
+		const lift = layers.getActive().drawCanvas.lift({maskData: mask});
+		layers.getActive().selectCanvas.clear();
+		layers.add();
+		layers.getActive().drawCanvas.stamp({maskData: lift});
+		layers.save().refresh();
+		tools.activateByName({name: 'Hand'}).refresh();
+	},
+	mouseLeave: (e) => {
+		layers.getActive().selectCanvas.clear();
+		layers.getActive().cursorCanvas.clear();
+	}
+})); // }}}
+
+
+tools.push(makeTool({ // distort {{{
+	name: 'Distort',
+	info: 'Squeeze and stretch the content of the active layer.',
+	iconPath: 'icons/solid/down-left-and-up-right-to-center.svg',
+	mouseDown: (e) => {
+		layers.getActive()
+			.drawCanvas
+			.save();
+	},
+	mouseDrag: (e) => {
+		let newWidth = layers.width - dX;
+		let newHeight = layers.height - dY;
+		layers.getActive().drawCanvas.distort({height: newHeight, width: newWidth, anchorX: canvasStartX, anchorY: canvasStartY});
+		// startX = endX;
+		// startY = endY;
+	},
+	mouseUp: (e) => {
+		layers.save().refreshPreviews();
+	}
+})); // }}}
+
 tools.push(makeTool({ // resize {{{
 	name: 'Resize',
 	info: 'Resize the easel.',
-	key: 'r',
 	iconPath: 'icons/solid/ruler-combined.svg',
 	mouseDrag: (e) => {
 		let newWidth = layers.width + dX;
@@ -563,22 +1139,17 @@ tools.push(makeTool({ // resize {{{
 	}
 })); // }}}
 
-var tempScale = 1;
-
 tools.push(makeTool({ // zoom {{{
 	name: 'Zoom',
 	info: 'Zoom in on the easel.',
-	key: 'z',
 	iconPath: 'icons/solid/magnifying-glass.svg',
 	mouseDown: (e) => {
 		tempScale = layers.zoomScale;
-		console.log(tempScale);
 	},
 	mouseDrag: (e) => {
 		tempScale = tempScale + dX / 100;
 		var scale = Math.floor(tempScale);
 		if (scale !== layers.zoomScale) {
-			console.log(scale);
 			layers.zoom({scale}).refreshZoomController();
 		}
 		startX = endX;
@@ -626,8 +1197,8 @@ studioElement.addEventListener('mousemove', (e) => { // {{{
 	}
 
 	toolTipElement.style.display = 'block';
-	toolTipElement.style.left = `${e.clientX}px`;
-	toolTipElement.style.top = `${e.clientY - 16}px`;
+	toolTipElement.style.left = `${e.clientX + 5}px`;
+	toolTipElement.style.top = `${e.clientY - 16 - 5}px`;
 
 }); // }}}
 
@@ -636,7 +1207,7 @@ studioElement.addEventListener('mousedown', (e) => { // {{{
 	startX = e.clientX;
 	startY = e.clientY;
 
-	const canvas = layers[0].selectCanvas;
+	const canvas = layers[0].cursorCanvas;
 	canvasStartX = canvas.getPositionOnCanvas(e).x;
 	canvasStartY = canvas.getPositionOnCanvas(e).y;
 
@@ -650,12 +1221,25 @@ studioElement.addEventListener('mousedown', (e) => { // {{{
 
 studioElement.addEventListener('mouseup', (e) => { // {{{
 	isMouseDown = false;
-	startX = e.clientX;
-	startY = e.clientY;
+	// startX = e.clientX;
+	// startY = e.clientY;
 
-	const canvas = layers[0].selectCanvas;
-	canvasStartX = canvas.getPositionOnCanvas(e).x;
-	canvasStartY = canvas.getPositionOnCanvas(e).y;
+	// const canvas = layers[0].cursorCanvas;
+	// canvasStartX = canvas.getPositionOnCanvas(e).x;
+	// canvasStartY = canvas.getPositionOnCanvas(e).y;
+	
+	endX = e.clientX;
+	endY = e.clientY;
+	dX = endX - startX;
+	dY = endY - startY;
+
+	const canvas = layers.getActive().drawCanvas;
+
+	canvasEndX = canvas.getPositionOnCanvas(e).x;
+	canvasEndY = canvas.getPositionOnCanvas(e).y;
+	canvasDX = canvasEndX - canvasStartX;
+	canvasDY = canvasEndY - canvasStartY;
+	canvasColor.copy({color2: canvas.getPixel({x: canvasEndX, y: canvasEndY})}).refresh();
 
 	if (tools.active) {
 		if (tools.active.mouseUp) {
@@ -670,7 +1254,7 @@ studioElement.addEventListener('mouseleave', (e) => { // {{{
 	startX = e.clientX;
 	startY = e.clientY;
 
-	const canvas = layers[0].selectCanvas;
+	const canvas = layers[0].cursorCanvas;
 	canvasStartX = canvas.getPositionOnCanvas(e).x;
 	canvasStartY = canvas.getPositionOnCanvas(e).y;
 
@@ -696,7 +1280,7 @@ document.addEventListener('keydown', (e) => {
 	tools.forEach(tool => {
 		if (tool.key === e.key.toLowerCase()) {
 			tools.activate({tool}).refresh();
-			layers.getActive().selectCanvas.clear();
+			layers.getActive().cursorCanvas.clear();
 			isKeyDown = true;
 		}
 		if (tool.quickKey === e.key.toLowerCase()) {
@@ -722,9 +1306,8 @@ document.addEventListener('keyup', (e) => {
 		if (tool.key === e.key.toLowerCase()) {
 			isKeyDown = false;
 			if (tool.key === e.key) {
-				console.log(`Key up: ${e.key} reverts from tool: ${tool.name}`);
 				tools.revert().refresh();
-				layers.getActive().selectCanvas.clear();
+				layers.getActive().cursorCanvas.clear();
 			}
 		}
 		if (tool.quickKey === e.key.toLowerCase()) {

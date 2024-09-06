@@ -5,6 +5,8 @@ function makeLayer({height=600, width=800}={}) {
 		layer.height = height;
 		layer.width = width;
 		layer.drawCanvas.resize({height, width});
+		layer.cursorCanvas.resize({height, width});
+		layer.tempCanvas.resize({height, width});
 		layer.selectCanvas.resize({height, width});
 		return layer;
 	}; // }}}
@@ -16,7 +18,7 @@ function makeLayer({height=600, width=800}={}) {
 	}; // }}}
 
 	layer.fill = function({color}) { // {{{
-		layer.drawCanvas.fill({color});
+		layer.drawCanvas.fillAll({color});
 
 		return layer;
 	} // }}}
@@ -33,6 +35,12 @@ function makeLayer({height=600, width=800}={}) {
 		if (layer.drawCanvas && layer.drawCanvas.parentNode) {
 			layer.drawCanvas.parentNode.removeChild(layer.drawCanvas);
 		}
+		if (layer.cursorCanvas && layer.cursorCanvas.parentNode) {
+			layer.cursorCanvas.parentNode.removeChild(layer.cursorCanvas);
+		}
+		if (layer.tempCanvas && layer.tempCanvas.parentNode) {
+			layer.tempCanvas.parentNode.removeChild(layer.tempCanvas);
+		}
 		if (layer.selectCanvas && layer.selectCanvas.parentNode) {
 			layer.selectCanvas.parentNode.removeChild(layer.selectCanvas);
 		}
@@ -42,10 +50,16 @@ function makeLayer({height=600, width=800}={}) {
 		layer.height = height;
 		layer.width = width;
 		layer.drawCanvas = makeCanvas({height, width});
+		layer.tempCanvas = makeCanvas({height, width});
+		layer.tempCanvas.style.pointerEvents = 'none';
 		layer.selectCanvas = makeCanvas({height, width});
-		layer.selectCanvas.style.mixBlendMode = 'difference';
 		layer.selectCanvas.style.pointerEvents = 'none';
-		layer.selectCanvas.style.zIndex = 5;
+		layer.selectCanvas.style.mixBlendMode = 'difference';
+		layer.selectCanvas.style.zIndex = 4;
+		layer.cursorCanvas = makeCanvas({height, width});
+		layer.cursorCanvas.style.mixBlendMode = 'difference';
+		layer.cursorCanvas.style.pointerEvents = 'none';
+		layer.cursorCanvas.style.zIndex = 5;
 		const previewElement = document.createElement("img");
 		previewElement.className = "layer-preview";
 		layer.previewElement = previewElement;
@@ -116,14 +130,11 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 	layers.loadFromLocalStorage = function() { // {{{
 		// const currentState = localStorage.getItem('layers');
 		// if (currentState) {
-		// 	console.log("Restoring current state from local storage");
 		// 	const state = JSON.parse(currentState);
-		// 	console.log(state);
 		// 	layers._deserialize({ state });
 		// 	layers.historyStack = [];
 		// 	layers.redoStack = [];
 		// } else {
-		// 	console.log("No current state found in local storage");
 		// }
 		const historyData = localStorage.getItem('layersHistory');
 		const redoData = localStorage.getItem('layersRedo');
@@ -134,11 +145,9 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 			layers.redoStack = JSON.parse(redoData);
 		}
 		if (layers.historyStack.length > 0) {
-			console.log("Restoring history from local storage");
 			const lastState = layers.historyStack[layers.historyStack.length - 1];
 			layers._deserialize({state: lastState});
 		} else {
-			console.log("No history found in local storage");
 			layers.save();
 		}
 
@@ -154,7 +163,6 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 		}
 		layers.redoStack = [];
 		layers.saveToLocalStorage();
-		console.log("Saving current state to history stack");
 		
 		return layers;
 	}; // }}}
@@ -230,6 +238,12 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 			const layer = layers.pop();
 			if (layer.drawCanvas && layer.drawCanvas.parentNode) {
 				layer.drawCanvas.parentNode.removeChild(layer.drawCanvas);
+			}
+			if (layer.cursorCanvas && layer.cursorCanvas.parentNode) {
+				layer.cursorCanvas.parentNode.removeChild(layer.cursorCanvas);
+			}
+			if (layer.tempCanvas && layer.tempCanvas.parentNode) {
+				layer.tempCanvas.parentNode.removeChild(layer.tempCanvas);
 			}
 			if (layer.selectCanvas && layer.selectCanvas.parentNode) {
 				layer.selectCanvas.parentNode.removeChild(layer.selectCanvas);
@@ -318,6 +332,8 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 		layers.zoomScale = scale;
 		layers.forEach(layer => {
 			layer.drawCanvas.zoom({scale});
+			layer.cursorCanvas.zoom({scale});
+			layer.tempCanvas.zoom({scale});
 			layer.selectCanvas.zoom({scale});
 		});
 		easelElement.style.width = `${layers.width * scale}px`;
@@ -404,7 +420,6 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 				console.error("Error saving file:", error);
 			}
 		} else {
-			console.log("Fallback for browsers that do not support the File System Access API");
 			// Fallback for browsers that do not support the File System Access API
 			const link = document.createElement('a');
 			link.href = URL.createObjectURL(blob);
@@ -444,7 +459,6 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 						layers.saveToLocalStorage();
 						layers.updateActive().refresh();
 
-						console.log("Layers successfully imported from file.");
 					} catch (error) {
 						console.error("Error importing layers from file:", error);
 					}
@@ -470,7 +484,9 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 		layers.easelElement.innerHTML = "";
 		layers.forEach(layer => {
 			layers.easelElement.appendChild(layer.drawCanvas);
+			layers.easelElement.appendChild(layer.tempCanvas);
 			layers.easelElement.appendChild(layer.selectCanvas);
+			layers.easelElement.appendChild(layer.cursorCanvas);
 		});
 
 		return layers;

@@ -1,6 +1,6 @@
-function makeTool({name, info, key, quickKey, iconPath, mouseDown=undefined, mouseMove=undefined, mouseDrag=undefined, mouseUp=undefined, mouseLeave=undefined}) {
-	if (!name || !key || !iconPath) {
-		throw new Error("name, key, and iconPath are required to make a tool");
+function makeTool({name, info, key, quickKey, iconPath, subIconPath, mouseDown=undefined, mouseMove=undefined, mouseDrag=undefined, mouseUp=undefined, mouseLeave=undefined}) {
+	if (!name || !iconPath) {
+		throw new Error("name and iconPath are required to make a tool");
 	}
 
 	const tool = {};
@@ -10,6 +10,7 @@ function makeTool({name, info, key, quickKey, iconPath, mouseDown=undefined, mou
 		tool.info = info;
 		tool.key = key;
 		tool.quickKey = quickKey;
+		tool.subIconPath = subIconPath;
 		tool.iconPath = iconPath;
 		tool.mouseDown = mouseDown;
 		tool.mouseMove = mouseMove;
@@ -70,6 +71,9 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 				button.classList.add("active");
 			}
 			button.innerHTML = `<img src="${tool.iconPath}" alt="${tool.name}">`;
+			if (tool.subIconPath) {
+				button.innerHTML += `<img class="sub-icon" src="${tool.subIconPath}" alt="${tool.name}">`;
+			}
 			button.addEventListener("click", () => {
 				tools.activate({tool}).refresh();
 			});

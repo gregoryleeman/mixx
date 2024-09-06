@@ -75,6 +75,23 @@ function makeCanvas({height, width}) {
 		return canvas;
 	}; // }}}
 
+	canvas.distort = function({height, width,  anchorX = canvas.width / 2, anchorY = canvas.height / 2 }) { // {{{
+		canvas.clear();
+		const scaleX = canvas.width / width;
+		const scaleY = canvas.height / height;
+
+		// const offsetX = (canvas.width - width) / 2;
+		// const offsetY = (canvas.height - height) / 2;
+		
+		const offsetX = anchorX - (anchorX * scaleX);
+		const offsetY = anchorY - (anchorY * scaleY);
+
+		canvas.ctx.drawImage(canvas.temp, 0, 0, canvas.width, canvas.height, offsetX, offsetY, canvas.width * scaleX, canvas.height * scaleY);
+		// canvas.ctx.drawImage(canvas.temp, 0, 0, canvas.width, canvas.height, 0, 0, canvas.width * scaleX, canvas.height * scaleY);
+
+		return canvas;
+	}; // }}}
+
 	canvas.drawRect = function({x, y, width, height, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 		x = Math.round(x);
 		y = Math.round(y);
@@ -101,7 +118,7 @@ function makeCanvas({height, width}) {
 		return canvas;
 	}; // }}}
 
-	canvas.fill = function({color=makeColor({r: 0, g: 0, b: 0, a: 255})}) { // {{{
+	canvas.fillAll = function({color=makeColor({r: 0, g: 0, b: 0, a: 255})}) { // {{{
 		canvas.drawRect({
 			x: 0,
 			y: 0,
@@ -145,8 +162,18 @@ function makeCanvas({height, width}) {
 		const dy = Math.abs(y2 - y1);
 		const sx = x1 < x2 ? 1 : -1;
 		const sy = y1 < y2 ? 1 : -1;
+
+		if (!canvas._path) {
+			canvas._path = [];
+		}
+
+		if (canvas._path == []) {
+			canvas._pathComplete = false;
+		}
+
 		let err = dx - dy;
 		while (true) {
+			canvas._path.push({x: x1, y: y1});
 			canvas.drawPixel({x: x1, y: y1, color, erase});
 			if (x1 === x2 && y1 === y2) break;
 			const e2 = err * 2;
@@ -157,77 +184,211 @@ function makeCanvas({height, width}) {
 		return canvas;
 	}; // }}}
 
+	canvas.lift = function({maskData}) { // {{{
+		const lifted = canvas.ctx.createImageData(canvas.width, canvas.height).data;
+		const canvasData = canvas.getData();
+		for (let i = 0; i < maskData.length; i += 4) {
+			if (maskData[i + 3] > 0) {
+				lifted[i] = canvasData[i];
+				lifted[i + 1] = canvasData[i + 1];
+				lifted[i + 2] = canvasData[i + 2];
+				lifted[i + 3] = canvasData[i + 3];
+			}
+		}
+
+		canvas.stamp({maskData: lifted, erase: true});
+
+		return lifted;
+	} // }}}	
+
+	canvas.stamp = function({maskData, erase = false}) { // {{{
+		const data = canvas.getData();
+		for (let i = 0; i < maskData.length; i += 4) {
+			if (maskData[i + 3] > 0) {
+				if (erase) {
+					data[i] = 0;
+					data[i + 1] = 0;
+					data[i + 2] = 0;
+					data[i + 3] = 0;
+				} else {
+					data[i] = maskData[i];
+					data[i + 1] = maskData[i + 1];
+					data[i + 2] = maskData[i + 2];
+					data[i + 3] = 255;
+				}
+			}
+		}
+		canvas.ctx.putImageData(new ImageData(data, canvas.width, canvas.height), 0, 0);
+		return canvas;
+	} // }}}
+
+	canvas.fill = function({maskData, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
+		for (let i = 0; i < maskData.length; i += 4) {
+			if (maskData[i + 3] > 0) {
+				maskData[i] = color.r;
+				maskData[i + 1] = color.g;
+				maskData[i + 2] = color.b;
+				maskData[i + 3] = 255;
+			}
+		}
+		canvas.stamp({maskData, erase});
+
+		return canvas;
+	} // }}}
+
+	canvas.rectFill = function({x, y, width, height}) {
+		const data = new ImageData(canvas.width, canvas.height).data;
+		for (let y1 = y; y1 < y + height; y1++) {
+			for (let x1 = x; x1 < x + width; x1++) {
+				let index = (y1 * canvas.width + x1) * 4;
+				data[index] = 255;
+				data[index + 1] = 0;
+				data[index + 2] = 0;
+				data[index + 3] = 255;
+			}
+		}
+		return data;
+	}
+
+	canvas.pathFill = function({path}) { // {{{
+		if (path === undefined) {
+			return canvas;
+		}
+
+		// Find the bounding box of the path
+		let minX = Math.min(...path.map(p => p.x));
+		let maxX = Math.max(...path.map(p => p.x));
+		let minY = Math.min(...path.map(p => p.y));
+		let maxY = Math.max(...path.map(p => p.y));
+
+		const data = new ImageData(width, height).data;
+
+		// Use a simple scanline filling method
+		for (let y = minY; y <= maxY; y++) {
+			let intersections = [];
+
+			// Find intersections with path edges
+			for (let i = 0; i < path.length; i++) {
+				let p1 = path[i];
+				let p2 = path[(i + 1) % path.length];
+				if ((p1.y <= y && p2.y > y) || (p1.y > y && p2.y <= y)) {
+					let x = p1.x + (y - p1.y) * (p2.x - p1.x) / (p2.y - p1.y);
+					intersections.push(Math.round(x));
+				}
+			}
+
+			// Sort intersections
+			intersections.sort((a, b) => a - b);
+
+			// Fill between pairs of intersections
+			for (let i = 0; i < intersections.length; i += 2) {
+				let startX = intersections[i];
+				let endX = intersections[i + 1];
+
+				// Fill pixels between the two x coordinates
+				for (let x = startX; x <= endX; x++) {
+					let index = (y * canvas.width + x) * 4;
+					data[index + 3] = 255;
+
+				}
+			}
+		}
+
+		return data;
+	}; // }}}
+
+	canvas.maskFill = function({data}) {
+		if (!data) {
+			return;
+		}
+
+		// Function to determine if a pixel is part of the shape's border
+		function isBorder(x, y) {
+			const index = (y * canvas.width + x) * 4;
+			return data[index + 3] > 0; // Check if alpha channel is greater than 0
+		}
+
+		// Use a simple scanline filling method
+		for (let y = 0; y < canvas.height; y++) {
+			let inside = false;
+			for (let x = 0; x < canvas.width; x++) {
+				if (isBorder(x, y)) {
+					inside = !inside; // Toggle inside/outside when hitting a border
+				}
+
+				if (inside) {
+					const index = (y * canvas.width + x) * 4;
+					data[index + 3] = 255; // Set alpha channel to 255 (fully opaque)
+				}
+			}
+		}
+
+		return data;
+	}; // }}}
+
 	canvas.drawEmptyRectangle = function({x, y, width, height, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 		width = Math.round(width);
 		height = Math.round(height);
-		canvas.rect({x: x, y: y, width: width, height: 1, color, erase});
-		canvas.rect({x: x, y: y, width: 1, height: height, color, erase});
-		canvas.rect({x: x, y: y + height, width: width, height: 1, color, erase});
-		canvas.rect({x: x + width, y: y, width: 1, height: height, color, erase});
+		canvas.drawRect({x: x, y: y, width: width + 1, height: 1, color, erase});
+		canvas.drawRect({x: x, y: y, width: 1, height: height + 1, color, erase});
+		canvas.drawRect({x: x, y: y + height, width: width + 1, height: 1, color, erase});
+		canvas.drawRect({x: x + width, y: y, width: 1, height: height + 1, color, erase});
+		return canvas, x, y, width, height
+	}; // }}}
+
+	canvas.drawCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) { // {{{
+		if (diameter === 1) {
+			canvas.drawPixel({x, y, color, erase});
+			return canvas;
+		}
+
+		let radius = Math.floor(diameter / 2);
+		let radiusSquared = radius * radius;
+
+		for (let y1 = -radius; y1 <= radius; y1++) {
+			for (let x1 = -radius; x1 <= radius; x1++) {
+				if ((x1 * x1 + y1 * y1) < radiusSquared) {
+					canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+				}
+			}
+		}
 
 		return canvas;
 	}; // }}}
 
-canvas.drawCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) {
-    if (diameter === 1) {
-        canvas.drawPixel({x, y, color, erase});
-        return canvas;
-    }
+	canvas.drawEllipse = function({x, y, width, height, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
+		let radiusX = Math.abs(width);
+		let radiusY = Math.abs(height);
+		let radiusXSquared = radiusX * radiusX;
+		let radiusYSquared = radiusY * radiusY;
 
-    let radius = Math.floor(diameter / 2);
-    let radiusSquared = radius * radius;
+		for (let y1 = -radiusY; y1 <= radiusY; y1++) {
+			for (let x1 = -radiusX; x1 <= radiusX; x1++) {
+				if ((x1 * x1 / radiusXSquared + y1 * y1 / radiusYSquared) <= 1) {
+					canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+				}
+			}
+		}
 
-    for (let y1 = -radius; y1 <= radius; y1++) {
-        for (let x1 = -radius; x1 <= radius; x1++) {
-            if ((x1 * x1 + y1 * y1) < radiusSquared) {
-                canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
-            }
-        }
-    }
+		return canvas;
+	} // }}}
 
-    return canvas;
-};
+	canvas.drawEmptyEllipse = function({x, y, width, height, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
+		let radiusX = width / 2;
+		let radiusY = height / 2;
+		let radiusXSquared = radiusX * radiusX;
+		let radiusYSquared = radiusY * radiusY;
 
-// canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) {
-//     if (diameter <= 1) {
-//         canvas.drawPixel({x, y, color, erase});
-//         return canvas;
-//     }
-//     canvas.drawCircle({x, y, diameter, color, erase});
-// 	canvas.drawCircle({x, y, diameter: diameter - 2, color, erase: true});
-//     return canvas;
-// };
+		for (let y1 = -radiusY; y1 <= radiusY; y1++) {
+			for (let x1 = -radiusX; x1 <= radiusX; x1++) {
+				if ((x1 * x1 / radiusXSquared + y1 * y1 / radiusYSquared) <= 1 && (x1 * x1 / radiusXSquared + y1 * y1 / radiusYSquared) >= 0.9) {
+					canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+				}
+			}
+		}
 
-
-
-
-
-
-
-canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) {
-    if (diameter === 1) {
-        canvas.drawPixel({x, y, color, erase});
-        return canvas;
-    }
-
-    let radius = Math.floor(diameter / 2);
-    let radiusSquared = radius * radius;
-
-    for (let y1 = -radius; y1 <= radius; y1++) {
-        for (let x1 = -radius; x1 <= radius; x1++) {
-            let distanceSquared = x1 * x1 + y1 * y1;
-
-            // Check if the point is exactly on the circumference of the filled circle
-            if (distanceSquared >= radiusSquared - radius && distanceSquared < radiusSquared) {
-                canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
-            }
-        }
-    }
-
-    return canvas;
-};
-
-	
+		return canvas;
+	} // }}}
 
 	// canvas.drawCircle = function({x, y, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 	// 	if (diameter === 1) {
@@ -244,6 +405,39 @@ canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0
 	// 	}
 
 	// 	return canvas;
+	// }; // }}}
+	
+	canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) { // {{{
+		if (diameter === 1) {
+			canvas.drawPixel({x, y, color, erase});
+			return canvas;
+		}
+
+		let radius = Math.floor(diameter / 2);
+		let radiusSquared = radius * radius;
+
+		for (let y1 = -radius; y1 <= radius; y1++) {
+			for (let x1 = -radius; x1 <= radius; x1++) {
+				let distanceSquared = x1 * x1 + y1 * y1;
+
+				// Check if the point is exactly on the circumference of the filled circle
+				if (distanceSquared >= radiusSquared - radius && distanceSquared < radiusSquared) {
+					canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+				}
+			}
+		}
+
+		return canvas;
+	}; // }}}
+
+	// canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) { // {{{
+	//     if (diameter <= 1) {
+	//         canvas.drawPixel({x, y, color, erase});
+	//         return canvas;
+	//     }
+	//     canvas.drawCircle({x, y, diameter, color, erase});
+	// 	canvas.drawCircle({x, y, diameter: diameter - 2, color, erase: true});
+	//     return canvas;
 	// }; // }}}
 
 	// canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) { // {{{
@@ -277,7 +471,7 @@ canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0
 		const dx = x2 - x1;
 		const dy = y2 - y1;
 		const distance = Math.sqrt(dx * dx + dy * dy);
-		const steps = Math.ceil(distance / (diameter / 3));
+		const steps = Math.ceil(distance / (diameter / 4));
 		for (let i = 0; i <= steps; i++) {
 			const x = Math.round(x1 + (dx * i) / steps);
 			const y = Math.round(y1 + (dy * i) / steps);
@@ -288,54 +482,103 @@ canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0
 	}; // }}}
 
 	canvas.drawCrossHairs = function({x, y, length=5, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
-		canvas.drawRect({x: x - length, y, width: length * 2, height: 1, color, erase});
-		canvas.drawRect({x, y: y - length, width: 1, height: length * 2, color, erase});
+		canvas.drawRect({x: x - length, y, width: length * 2 + 1, height: 1, color, erase});
+		canvas.drawRect({x, y: y - length, width: 1, height: length * 2 +1, color, erase});
 
 		return canvas;
 	} // }}}
 
-	canvas.floodFill = function({x, y, color=makeColor({r: 0, g: 0, b: 0, a: 255})}) { // {{{
+canvas.floodFill = function({x, y, color=makeColor({r: 0, g: 0, b: 0, a: 255}), tolerance = 5}) { // {{{
 
-		const targetColor = canvas.getPixel({x, y});
-		const fillColor = color;
+    const targetColor = canvas.getPixel({x, y});
+    const fillColor = color;
 
-		if (targetColor.match({color2: fillColor})) {
-			return;
-		}
+    if (targetColor.match({color2: fillColor})) {
+        return;
+    }
 
-		const targetColorArray = targetColor.toRgbaArray();
-		const fillColorArray = fillColor.toRgbaArray();
-		const data = canvas.getData();
+    const targetColorArray = targetColor.toRgbaArray();
+    const fillColorArray = fillColor.toRgbaArray();
+    const data = canvas.getData();
 
-		const stack = [{x, y}];
+    const stack = [{x, y}];
 
-		while (stack.length > 0) {
-			const {x, y} = stack.pop();
+    // Function to check if the color matches with some tolerance
+    function colorMatch(c1, c2, tol) {
+        return Math.abs(c1[0] - c2[0]) <= tol &&
+               Math.abs(c1[1] - c2[1]) <= tol &&
+               Math.abs(c1[2] - c2[2]) <= tol &&
+               Math.abs(c1[3] - c2[3]) <= tol;
+    }
 
-			const index = (y * canvas.width + x) * 4;
-			const currentColorArray = [data[index], data[index + 1], data[index + 2], data[index + 3]];
+    while (stack.length > 0) {
+        const {x, y} = stack.pop();
 
-			if (currentColorArray[0] === targetColorArray[0] && 
-				currentColorArray[1] === targetColorArray[1] &&
-				currentColorArray[2] === targetColorArray[2] && 
-				currentColorArray[3] === targetColorArray[3]
-			) {
-				data[index] = fillColorArray[0];
-				data[index + 1] = fillColorArray[1];
-				data[index + 2] = fillColorArray[2];
-				data[index + 3] = fillColorArray[3];
+        const index = (y * canvas.width + x) * 4;
+        const currentColorArray = [data[index], data[index + 1], data[index + 2], data[index + 3]];
 
-				if (x > 0) stack.push({x: x - 1, y});
-				if (x < canvas.width - 1) stack.push({x: x + 1, y});
-				if (y > 0) stack.push({x, y: y - 1});
-				if (y < canvas.height - 1) stack.push({x, y: y + 1});
-			}
-		}
+        // Use the colorMatch function to compare colors with tolerance
+        if (colorMatch(currentColorArray, targetColorArray, tolerance)) {
+            data[index] = fillColorArray[0];
+            data[index + 1] = fillColorArray[1];
+            data[index + 2] = fillColorArray[2];
+            data[index + 3] = fillColorArray[3];
 
-		canvas.ctx.putImageData(new ImageData(data, canvas.width, canvas.height), 0, 0);
+            if (x > 0) stack.push({x: x - 1, y});
+            if (x < canvas.width - 1) stack.push({x: x + 1, y});
+            if (y > 0) stack.push({x, y: y - 1});
+            if (y < canvas.height - 1) stack.push({x, y: y + 1});
+        }
+    }
 
-		return canvas;
-	}; // }}}
+    canvas.ctx.putImageData(new ImageData(data, canvas.width, canvas.height), 0, 0);
+
+    return canvas;
+}; // }}}
+
+
+	// canvas.floodFill = function({x, y, color=makeColor({r: 0, g: 0, b: 0, a: 255})}) { // {{{
+
+	// 	const targetColor = canvas.getPixel({x, y});
+	// 	const fillColor = color;
+
+	// 	if (targetColor.match({color2: fillColor})) {
+	// 		return;
+	// 	}
+
+	// 	const targetColorArray = targetColor.toRgbaArray();
+	// 	const fillColorArray = fillColor.toRgbaArray();
+	// 	const data = canvas.getData();
+
+	// 	const stack = [{x, y}];
+
+	// 	while (stack.length > 0) {
+	// 		const {x, y} = stack.pop();
+
+	// 		const index = (y * canvas.width + x) * 4;
+	// 		const currentColorArray = [data[index], data[index + 1], data[index + 2], data[index + 3]];
+
+	// 		if (currentColorArray[0] === targetColorArray[0] && 
+	// 			currentColorArray[1] === targetColorArray[1] &&
+	// 			currentColorArray[2] === targetColorArray[2] && 
+	// 			currentColorArray[3] === targetColorArray[3]
+	// 		) {
+	// 			data[index] = fillColorArray[0];
+	// 			data[index + 1] = fillColorArray[1];
+	// 			data[index + 2] = fillColorArray[2];
+	// 			data[index + 3] = fillColorArray[3];
+
+	// 			if (x > 0) stack.push({x: x - 1, y});
+	// 			if (x < canvas.width - 1) stack.push({x: x + 1, y});
+	// 			if (y > 0) stack.push({x, y: y - 1});
+	// 			if (y < canvas.height - 1) stack.push({x, y: y + 1});
+	// 		}
+	// 	}
+
+	// 	canvas.ctx.putImageData(new ImageData(data, canvas.width, canvas.height), 0, 0);
+
+	// 	return canvas;
+	// }; // }}}
 
 	canvas.getPositionOnCanvas = function(e) { // {{{
 		const rect = canvas.getBoundingClientRect();
@@ -358,6 +601,8 @@ canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0
 		canvas.temp = document.createElement("canvas");
 		canvas.temp.ctx = canvas.temp.getContext("2d", { willReadFrequently: true });
 		canvas.resize({height, width});
+		canvas._path = [];
+		canvas._pathComplete = false;
 		canvas.zoomScale = 1;
 
 		return canvas;
