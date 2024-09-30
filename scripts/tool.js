@@ -1,4 +1,4 @@
-function makeTool({name, info, key, quickKey, iconPath, subIconPath, mouseDown=undefined, mouseMove=undefined, mouseDrag=undefined, mouseUp=undefined, mouseLeave=undefined}) {
+function makeTool({name, toolClass, info, key, quickKey, iconPath, subIconPath, mouseDown=undefined, mouseMove=undefined, mouseDrag=undefined, mouseUp=undefined, mouseLeave=undefined, mouseDoubleClick=undefined}) {
 	if (!name || !iconPath) {
 		throw new Error("name and iconPath are required to make a tool");
 	}
@@ -7,6 +7,7 @@ function makeTool({name, info, key, quickKey, iconPath, subIconPath, mouseDown=u
 
 	tool.init = function() { // {{{
 		tool.name = name;
+		tool.toolClass = toolClass;
 		tool.info = info;
 		tool.key = key;
 		tool.quickKey = quickKey;
@@ -17,6 +18,7 @@ function makeTool({name, info, key, quickKey, iconPath, subIconPath, mouseDown=u
 		tool.mouseDrag = mouseDrag;
 		tool.mouseUp = mouseUp;
 		tool.mouseLeave = mouseLeave;
+		tool.mouseDoubleClick = mouseDoubleClick;
 
 		return tool;
 	} // }}}
@@ -36,6 +38,26 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 	tools.get = function({name}) { // {{{
 		return tools.find(tool => tool.name === name);
 	}; // }}}
+
+	tools.getByClass = function({toolClass}) { // {{{
+		return tools.find(tool => tool.toolClass === toolClass);
+	} // }}}
+
+	tools.remove = function({name}) { // {{{
+		const tool = tools.get({name});
+		if (tool) {
+			tools.splice(tools.indexOf(tool), 1);
+		}
+		return tools;
+	} // }}}
+
+	tools.replace = function({toolClass, tool}) { // {{{
+		const oldTool = tools.getByClass({toolClass});
+		if (oldTool) {
+			tools.splice(tools.indexOf(oldTool), 1, tool);
+		}
+		return tools;
+	} // }}}
 
 	tools.activate = function({tool}) { // {{{
 		if (tools.active) {

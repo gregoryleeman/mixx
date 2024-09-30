@@ -7,7 +7,9 @@ function makeLayer({height=600, width=800}={}) {
 		layer.drawCanvas.resize({height, width});
 		layer.cursorCanvas.resize({height, width});
 		layer.tempCanvas.resize({height, width});
+		layer.temp2Canvas.resize({height, width});
 		layer.selectCanvas.resize({height, width});
+		layer.select2Canvas.resize({height, width});
 		return layer;
 	}; // }}}
 
@@ -29,6 +31,18 @@ function makeLayer({height=600, width=800}={}) {
 		return layer;
 	} // }}}
 
+	layer.flipVertical = function() { // {{{
+		layer.drawCanvas.flipVertical();
+
+		return layer;
+	} // }}}
+
+	layer.flipHorizontal = function() { // {{{
+		layer.drawCanvas.flipHorizontal();
+
+		return layer;
+	} // }}}
+
 	// init
 	
 	layer.destruct = function() { // {{{
@@ -41,8 +55,14 @@ function makeLayer({height=600, width=800}={}) {
 		if (layer.tempCanvas && layer.tempCanvas.parentNode) {
 			layer.tempCanvas.parentNode.removeChild(layer.tempCanvas);
 		}
+		if (layer.temp2Canvas && layer.temp2Canvas.parentNode) {
+			layer.temp2Canvas.parentNode.removeChild(layer.temp2Canvas);
+		}
 		if (layer.selectCanvas && layer.selectCanvas.parentNode) {
 			layer.selectCanvas.parentNode.removeChild(layer.selectCanvas);
+		}
+		if (layer.select2Canvas && layer.select2Canvas.parentNode) {
+			layer.select2Canvas.parentNode.removeChild(layer.select2Canvas);
 		}
 	}; // }}}
 
@@ -52,10 +72,17 @@ function makeLayer({height=600, width=800}={}) {
 		layer.drawCanvas = makeCanvas({height, width});
 		layer.tempCanvas = makeCanvas({height, width});
 		layer.tempCanvas.style.pointerEvents = 'none';
+		layer.temp2Canvas = makeCanvas({height, width});
+		layer.temp2Canvas.style.pointerEvents = 'none';
 		layer.selectCanvas = makeCanvas({height, width});
 		layer.selectCanvas.style.pointerEvents = 'none';
 		layer.selectCanvas.style.mixBlendMode = 'difference';
 		layer.selectCanvas.style.zIndex = 4;
+		layer.select2Canvas = makeCanvas({height, width});
+		layer.select2Canvas.style.pointerEvents = 'none';
+		layer.select2Canvas.style.mixBlendMode = 'difference';
+		layer.select2Canvas.style.zIndex = 4;
+
 		layer.cursorCanvas = makeCanvas({height, width});
 		layer.cursorCanvas.style.mixBlendMode = 'difference';
 		layer.cursorCanvas.style.pointerEvents = 'none';
@@ -74,10 +101,10 @@ function makeLayer({height=600, width=800}={}) {
 }
 
 
-function makeLayers({easelElement, controllerElement, sizeControllerElement, zoomControllerElement,
-	height=600, width=800, backgroundColor=makeColor({r: 255, g: 255, b: 255}), infoTipElement}) {
-	if (!easelElement || !controllerElement) {
-		throw new Error("easelElement and controllerElement are required to make layers");
+function makeLayers({easelElement, layersElement, sizeControllerElement, zoomControllerElement,
+	height=600, width=800, backgroundColor=makeColor({r: 255, g: 255, b: 255}), infoTipElement, toolTopElement}) {
+	if (!easelElement || !layersElement) {
+		throw new Error("easelElement and layersElement are required to make layers");
 	}
 
 	const layers = [];
@@ -111,7 +138,7 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 		});
 
 		Promise.all(loadPromises).then(() => {
-			layers.updateActive();
+			layers.updateActive().zoom({scale: layers.zoomScale});
 			layers.refreshPreviews();
 		});
 	}; // }}}
@@ -168,6 +195,7 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 	}; // }}}
    
 	layers.undo = function() { // {{{
+		
 		if (layers.historyStack.length > 1) {
 			const currentState = layers.historyStack.pop();
 			layers.redoStack.push(currentState);
@@ -211,21 +239,26 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 		return layers;
 	}; // }}}
 
-
 	// layer management
 
 	layers.add = function() { // {{{
 		const layer = makeLayer({height: layers.height, width: layers.width});
+		const scale = layers.zoomScale;
+		layer.drawCanvas.zoom({scale});
+		layer.cursorCanvas.zoom({scale});
+		layer.tempCanvas.zoom({scale});
+		layer.temp2Canvas.zoom({scale});
+		layer.selectCanvas.zoom({scale});
+		layer.select2Canvas.zoom({scale});
 		layers.push(layer);
 		layers.activate({layer});
 
 		return layers;
 	}; // }}}
 
-	layers.remove = function({ layer}) { // {{{
-		const index = layers.indexOf(layer);
-		if (index > 1 && index < layers.length) {
-			layer.destruct();
+	layers.remove = function({index}) { // {{{
+		if (index > 0 && index < layers.length) {
+			layers[index].destruct();
 			layers.splice(index, 1);
 			layers.updateActive();
 		}
@@ -245,8 +278,14 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 			if (layer.tempCanvas && layer.tempCanvas.parentNode) {
 				layer.tempCanvas.parentNode.removeChild(layer.tempCanvas);
 			}
+			if (layer.temp2Canvas && layer.temp2Canvas.parentNode) {
+				layer.temp2Canvas.parentNode.removeChild(layer.temp2Canvas);
+			}
 			if (layer.selectCanvas && layer.selectCanvas.parentNode) {
 				layer.selectCanvas.parentNode.removeChild(layer.selectCanvas);
+			}
+			if (layer.select2Canvas && layer.select2Canvas.parentNode) {
+				layer.select2Canvas.parentNode.removeChild(layer.select2Canvas);
 			}
 		}
 
@@ -263,47 +302,43 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 
 	layers.mergeIndex = function({index1, index2}) { // {{{
 		layers[index1].add({layer2: layers[index2]});
-		layers.remove({layer: layers[index2]});
+		layers.remove({index: index2});
 
 		return layers;
 	}; // }}}
 
-	layers.moveUp = function({layer}) { // {{{
-		const index = layers.indexOf(layer);
-		if (index === 0 || index === layers.length - 1) return;
+	layers.moveUp = function({index}) { // {{{
+		if (index === 0 || index === layers.length - 1) return layers;
 		layers.switchIndex({index1: index, index2: index + 1});
-		layers.activate({layer: layers[index]});
+		layers.activeIndex = index + 1;
 
 		return layers;
 	}; // }}}
 
-	layers.moveDown = function({layer}) { // {{{
-		const index = layers.indexOf(layer);
-		if (index === 0 || index === 1) return;
+	layers.moveDown = function({index}) { // {{{
+		if (index === 0 || index === 1) return layers;
 		layers.switchIndex({index1: index, index2: index - 1});
-		layers.activate({layer: layers[index]});
+		layers.activeIndex = index - 1;
 
 		return layers;
 	}; // }}}
 
-	layers.mergeUp = function({layer}) { // {{{
-		const index = layers.indexOf(layer);
-		if (index === 0 || index === layers.length - 1) return;
-		layers.mergeIndex({index1: index, index2: index + 1});
-		layers.activate({layer: layers[index]});
-
-		return layers;
-	}; // }}}
-
-	layers.mergeDown = function({layer}) { // {{{
-		const index = layers.indexOf(layer);
-		if (index === 0 || index === 1) return;
+	layers.mergeDown = function({index}) { // {{{
+		if (index === 0 || index === 1) return layers;
 		layers.mergeIndex({index2: index, index1: index - 1});
-		layers.activate({layer: layers[index - 1]});
+		layers.activeIndex = index - 1;
 
 		return layers;
 	}; // }}}
 
+	layers.duplicate = function({index}) { // {{{
+		const newLayer = makeLayer({height: layers.height, width: layers.width});
+		newLayer.add({layer2: layers[index]});
+		layers.splice(index + 1, 0, newLayer);
+		layers.activeIndex = index + 1;
+
+		return layers;
+	} // }}}
 
 	// resize
 
@@ -334,11 +369,27 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 			layer.drawCanvas.zoom({scale});
 			layer.cursorCanvas.zoom({scale});
 			layer.tempCanvas.zoom({scale});
+			layer.temp2Canvas.zoom({scale});
 			layer.selectCanvas.zoom({scale});
+			layer.select2Canvas.zoom({scale});
 		});
-		easelElement.style.width = `${layers.width * scale}px`;
-		easelElement.style.height = `${layers.height * scale}px`;
+		easelElement.style.width = `${layers.width * scale + 2}px`;
+		easelElement.style.height = `${layers.height * scale + 2}px`;
 		return layers;
+	} // }}}
+
+	layers.flipAllVertical = function() { // {{{
+		layers.forEach(layer => {
+			layer.flipVertical();
+		});
+
+		return layers;
+	} // }}}
+
+	layers.flipAllHorizontal = function() { // {{{
+		layers.forEach(layer => {
+			layer.flipHorizontal();
+		});
 	} // }}}
 
 	// export and import
@@ -485,7 +536,9 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 		layers.forEach(layer => {
 			layers.easelElement.appendChild(layer.drawCanvas);
 			layers.easelElement.appendChild(layer.tempCanvas);
+			layers.easelElement.appendChild(layer.temp2Canvas);
 			layers.easelElement.appendChild(layer.selectCanvas);
+			layers.easelElement.appendChild(layer.select2Canvas);
 			layers.easelElement.appendChild(layer.cursorCanvas);
 		});
 
@@ -493,134 +546,40 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 	}; // }}}
 
 	layers.refreshController = function() { // {{{
-		layers.controllerElement.innerHTML = "";
+		layers.layersElement.innerHTML = "";
 		layers.forEach(layer => {
 
-			const controllerElement = document.createElement("div");
-			controllerElement.className = "layer";
+			const layersElement = document.createElement("div");
+			layersElement.className = "layer";
 			if (layer === layers.getActive()) {
-				controllerElement.classList.add("active");
+				layersElement.classList.add("active");
 			}
 
 			const previewElement = layer.previewElement;
-			controllerElement.appendChild(previewElement);
+			layersElement.appendChild(previewElement);
+			layersElement.style.cursor = "pointer";
 
 			if(layer !== layers[0]) {
-				previewElement.style.cursor = "pointer";
 				previewElement.addEventListener("click", () => {
 					layers.activate({layer}).refreshController().refreshEasel();
 				});
-				previewElement.addEventListener("mouseenter", () => {
-					layers.infoTipElement.innerHTML = 'Select layer.';
-					controllerElement.classList.add("hover");
-				});
-				previewElement.addEventListener("mouseleave", () => {
-					layers.infoTipElement.innerHTML = 'mixx.';
-					controllerElement.classList.remove("hover");
-				});
-
-				const moveButtons = document.createElement("div");
-				moveButtons.classList.add("layer-move-buttons");
-				moveButtons.className = "layer-move-buttons";
-
-				const moveUpButton = document.createElement("div");
-				moveUpButton.classList.add("button");
-				moveUpButton.classList.add("mini-button");
-				moveUpButton.classList.add("layer-move-button");
-				moveUpButton.innerHTML = `<img src="icons/solid/arrow-up.svg" alt="move up">`;
-				moveUpButton.addEventListener("click", () => {
-					layers.moveUp({layer}).save().refreshController().refreshEasel();
-				});
-				moveUpButton.addEventListener("mouseenter", () => {
-					layers.infoTipElement.innerHTML = 'Move layer up.';
-				});
-				moveUpButton.addEventListener("mouseleave", () => {
-					layers.infoTipElement.innerHTML = 'mixx.';
-				});
-
-				moveButtons.appendChild(moveUpButton);
-
-				const moveDownButton = document.createElement("div");
-				moveDownButton.classList.add("button");
-				moveDownButton.classList.add("mini-button");
-				moveDownButton.classList.add("layer-move-button");
-				moveDownButton.innerHTML = `<img src="icons/solid/arrow-down.svg" alt="move down">`;
-				moveDownButton.addEventListener("click", () => {
-					layers.moveDown({layer}).save().refreshController().refreshEasel();
-				});
-				moveDownButton.addEventListener("mouseenter", () => {
-					layers.infoTipElement.innerHTML = 'Move layer down.';
-				});
-				moveDownButton.addEventListener("mouseleave", () => {
-					layers.infoTipElement.innerHTML = 'mixx.';
-				});
-
-				moveButtons.appendChild(moveDownButton);
-
-				controllerElement.appendChild(moveButtons);
-
-				const mergeButtons = document.createElement("div");
-				mergeButtons.classList.add("layer-merge-buttons");
-				mergeButtons.className = "layer-merge-buttons";
-
-				const mergeDownButton = document.createElement("div");
-				mergeDownButton.classList.add("button");
-				mergeDownButton.classList.add("mini-button");
-				mergeDownButton.classList.add("layer-merge-button");
-				mergeDownButton.innerHTML = `<img src="icons/solid/angles-down.svg" alt="merge up">`;
-				mergeDownButton.addEventListener("click", () => {
-					layers.mergeDown({layer}).save().refreshController().refreshEasel();
-				});
-				mergeDownButton.addEventListener("mouseenter", () => {
-					layers.infoTipElement.innerHTML = 'Merge down.';
-				});
-				mergeDownButton.addEventListener("mouseleave", () => {
-					layers.infoTipElement.innerHTML = 'mixx.';
-				});
-
-
-				mergeButtons.appendChild(mergeDownButton);
-
-
-				const deleteButton = document.createElement("div");
-				deleteButton.classList.add("button");
-				deleteButton.classList.add("mini-button");
-				deleteButton.classList.add("layer-delete-button");
-				deleteButton.innerHTML = `<img src="icons/regular/trash-can.svg" alt="delete">`;
-				deleteButton.addEventListener("click", () => {
-					layers.remove({layer}).save().refreshController().refreshEasel();
-				});
-				deleteButton.addEventListener("mouseenter", () => {
-					layers.infoTipElement.innerHTML = 'Delete layer.';
-				});
-				deleteButton.addEventListener("mouseleave", () => {
-					layers.infoTipElement.innerHTML = 'mixx.';
-				});
-
-				mergeButtons.appendChild(deleteButton);
-
-				controllerElement.appendChild(mergeButtons);
 			}
 
-			layers.controllerElement.appendChild(controllerElement);
+			previewElement.addEventListener("mouseenter", () => {
+				layers.infoTipElement.innerHTML = 'Select layer.';
+				layers.toolTipElement.style.visibility = 'hidden';
+				layersElement.classList.add("hover");
+			});
+
+			previewElement.addEventListener("mouseleave", () => {
+				layers.infoTipElement.innerHTML = 'mixx.';
+				layers.toolTipElement.style.visibility = 'visible';
+				layersElement.classList.remove("hover");
+			});
+
+			layers.layersElement.appendChild(layersElement);
 
 		});
-
-		const addLayerButton = document.createElement("div");
-		addLayerButton.classList.add("layer-add-button");
-		addLayerButton.classList.add("button");
-		addLayerButton.innerHTML = `<img src="icons/solid/plus.svg" alt="add layer">`;
-		addLayerButton.addEventListener("click", () => {
-			layers.add().save().refresh();
-		});
-		addLayerButton.addEventListener("mouseenter", () => {
-			layers.infoTipElement.innerHTML = 'Add a new layer.';
-		});
-		addLayerButton.addEventListener("mouseleave", () => {
-			layers.infoTipElement.innerHTML = 'mixx.';
-		});
-
-		layers.controllerElement.appendChild(addLayerButton)
 
 		return layers;
 	}; // }}}
@@ -718,13 +677,20 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 		return layers;
 	}; // }}}
 
+	// helper
+	
+	layers.inBounds = function({x, y}) { // {{{
+		return x >= 0 && x < layers.width && y >= 0 && y < layers.height;
+	} // }}}
+
+
 
 	// init
 	
 	layers.destruct = function() { // {{{
 		layers.clear();
 		layers.easelElement.innerHTML = "";
-		layers.controllerElement.innerHTML = "";
+		layers.layersElement.innerHTML = "";
 	}; // }}}
 
 	layers.reset = function() { // {{{
@@ -732,8 +698,9 @@ function makeLayers({easelElement, controllerElement, sizeControllerElement, zoo
 		layers.height = height;
 		layers.width = width;
 		layers.easelElement = easelElement;
-		layers.controllerElement = controllerElement;
+		layers.layersElement = layersElement;
 		layers.infoTipElement = infoTipElement;
+		layers.toolTipElement = toolTipElement;
 		layers.sizeControllerElement = sizeControllerElement;
 		layers.zoomControllerElement = zoomControllerElement;
 		layers.activeIndex = 1;

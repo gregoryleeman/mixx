@@ -92,6 +92,24 @@ function makeCanvas({height, width}) {
 		return canvas;
 	}; // }}}
 
+	canvas.flipVertical = function() { // {{{
+		canvas.save();
+		canvas.clear();
+		canvas.ctx.scale(1, -1);
+		canvas.ctx.drawImage(canvas.temp, 0, -canvas.height);
+		canvas.ctx.scale(1, -1);
+		return canvas;
+	} // }}}
+
+	canvas.flipHorizontal = function() { // {{{
+		canvas.save();
+		canvas.clear();
+		canvas.ctx.scale(-1, 1);
+		canvas.ctx.drawImage(canvas.temp, -canvas.width, 0);
+		canvas.ctx.scale(-1, 1);
+		return canvas;
+	} // }}}
+
 	canvas.drawRect = function({x, y, width, height, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 		x = Math.round(x);
 		y = Math.round(y);
@@ -158,6 +176,7 @@ function makeCanvas({height, width}) {
 
 	canvas.drawLineWithPixels = function({x1, y1, x2, y2, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 		canvas.ctx.fillStyle = color.toRgbaString();
+
 		const dx = Math.abs(x2 - x1);
 		const dy = Math.abs(y2 - y1);
 		const sx = x1 < x2 ? 1 : -1;
@@ -173,7 +192,17 @@ function makeCanvas({height, width}) {
 
 		let err = dx - dy;
 		while (true) {
-			canvas._path.push({x: x1, y: y1});
+			sx1 = x1;
+			sy1 = y1;
+			if (sx1 < 0 || sx1 >= canvas.width || sy1 < 0 || sy1 >= canvas.height) {
+				// sx1 = canvas._path[canvas._path.length - 1].x;
+				// sy1 = canvas._path[canvas._path.length - 1].y;
+			} else {
+				// sx1 = Math.min(Math.max(x1, 0), canvas.width - 1)
+				// sy1 = Math.min(Math.max(y1, 0), canvas.height)
+				canvas._path.push({x: sx1, y: sy1});
+			}
+
 			canvas.drawPixel({x: x1, y: y1, color, erase});
 			if (x1 === x2 && y1 === y2) break;
 			const e2 = err * 2;
@@ -236,7 +265,7 @@ function makeCanvas({height, width}) {
 		return canvas;
 	} // }}}
 
-	canvas.rectFill = function({x, y, width, height}) {
+	canvas.rectFill = function({x, y, width, height}) { // {{{
 		const data = new ImageData(canvas.width, canvas.height).data;
 		for (let y1 = y; y1 < y + height; y1++) {
 			for (let x1 = x; x1 < x + width; x1++) {
@@ -248,7 +277,7 @@ function makeCanvas({height, width}) {
 			}
 		}
 		return data;
-	}
+	} // }}}
 
 	canvas.pathFill = function({path}) { // {{{
 		if (path === undefined) {
@@ -297,7 +326,7 @@ function makeCanvas({height, width}) {
 		return data;
 	}; // }}}
 
-	canvas.maskFill = function({data}) {
+	canvas.maskFill = function({data}) { // {{{
 		if (!data) {
 			return;
 		}
@@ -390,23 +419,6 @@ function makeCanvas({height, width}) {
 		return canvas;
 	} // }}}
 
-	// canvas.drawCircle = function({x, y, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
-	// 	if (diameter === 1) {
-	// 		canvas.drawPixel({x, y, color, erase});
-	// 	}
-	// 	let radius = Math.floor(diameter / 2);
-	// 	let radiusSquared = radius * radius;
-	// 	for (let y1 = -radius; y1 <= radius; y1++) {
-	// 		for (let x1 = -radius; x1 <= radius; x1++) {
-	// 			if ((x1 * x1 + y1 * y1) <= radiusSquared - radius) {
-	// 				canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
-	// 			}
-	// 		}
-	// 	}
-
-	// 	return canvas;
-	// }; // }}}
-	
 	canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) { // {{{
 		if (diameter === 1) {
 			canvas.drawPixel({x, y, color, erase});
@@ -429,39 +441,6 @@ function makeCanvas({height, width}) {
 
 		return canvas;
 	}; // }}}
-
-	// canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) { // {{{
-	//     if (diameter <= 1) {
-	//         canvas.drawPixel({x, y, color, erase});
-	//         return canvas;
-	//     }
-	//     canvas.drawCircle({x, y, diameter, color, erase});
-	// 	canvas.drawCircle({x, y, diameter: diameter - 2, color, erase: true});
-	//     return canvas;
-	// }; // }}}
-
-	// canvas.drawEmptyCircle = function({x, y, diameter, color = makeColor({r: 0, g: 0, b: 0, a: 255}), erase = false}) { // {{{
-	// 	if (diameter === 1) {
-	// 		canvas.drawPixel({x, y, color, erase});
-	// 		return canvas;
-	// 	}
-
-	// 	let radius = Math.floor(diameter / 2);
-	// 	let radiusSquared = radius * radius;
-
-	// 	for (let y1 = -radius; y1 <= radius; y1++) {
-	// 		for (let x1 = -radius; x1 <= radius; x1++) {
-	// 			let distanceSquared = x1 * x1 + y1 * y1;
-
-	// 			// Check if the point is on the circumference
-	// 			if (distanceSquared >= radiusSquared - radius && distanceSquared <= radiusSquared + radius) {
-	// 				canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
-	// 			}
-	// 		}
-	// 	}
-
-	// 	return canvas;
-	// }; // }}}
 
 	canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 		if (diameter === 1) {
@@ -488,97 +467,53 @@ function makeCanvas({height, width}) {
 		return canvas;
 	} // }}}
 
-canvas.floodFill = function({x, y, color=makeColor({r: 0, g: 0, b: 0, a: 255}), tolerance = 5}) { // {{{
+	canvas.floodFill = function({x, y, color=makeColor({r: 0, g: 0, b: 0, a: 255}), tolerance = 5}) { // {{{
 
-    const targetColor = canvas.getPixel({x, y});
-    const fillColor = color;
+		const targetColor = canvas.getPixel({x, y});
+		const fillColor = color;
 
-    if (targetColor.match({color2: fillColor})) {
-        return;
-    }
+		if (targetColor.match({color2: fillColor})) {
+			return;
+		}
 
-    const targetColorArray = targetColor.toRgbaArray();
-    const fillColorArray = fillColor.toRgbaArray();
-    const data = canvas.getData();
+		const targetColorArray = targetColor.toRgbaArray();
+		const fillColorArray = fillColor.toRgbaArray();
+		const data = canvas.getData();
 
-    const stack = [{x, y}];
+		const stack = [{x, y}];
 
-    // Function to check if the color matches with some tolerance
-    function colorMatch(c1, c2, tol) {
-        return Math.abs(c1[0] - c2[0]) <= tol &&
-               Math.abs(c1[1] - c2[1]) <= tol &&
-               Math.abs(c1[2] - c2[2]) <= tol &&
-               Math.abs(c1[3] - c2[3]) <= tol;
-    }
+		// Function to check if the color matches with some tolerance
+		function colorMatch(c1, c2, tol) {
+			return Math.abs(c1[0] - c2[0]) <= tol &&
+				   Math.abs(c1[1] - c2[1]) <= tol &&
+				   Math.abs(c1[2] - c2[2]) <= tol &&
+				   Math.abs(c1[3] - c2[3]) <= tol;
+		}
 
-    while (stack.length > 0) {
-        const {x, y} = stack.pop();
+		while (stack.length > 0) {
+			const {x, y} = stack.pop();
 
-        const index = (y * canvas.width + x) * 4;
-        const currentColorArray = [data[index], data[index + 1], data[index + 2], data[index + 3]];
+			const index = (y * canvas.width + x) * 4;
+			const currentColorArray = [data[index], data[index + 1], data[index + 2], data[index + 3]];
 
-        // Use the colorMatch function to compare colors with tolerance
-        if (colorMatch(currentColorArray, targetColorArray, tolerance)) {
-            data[index] = fillColorArray[0];
-            data[index + 1] = fillColorArray[1];
-            data[index + 2] = fillColorArray[2];
-            data[index + 3] = fillColorArray[3];
+			// Use the colorMatch function to compare colors with tolerance
+			if (colorMatch(currentColorArray, targetColorArray, tolerance)) {
+				data[index] = fillColorArray[0];
+				data[index + 1] = fillColorArray[1];
+				data[index + 2] = fillColorArray[2];
+				data[index + 3] = fillColorArray[3];
 
-            if (x > 0) stack.push({x: x - 1, y});
-            if (x < canvas.width - 1) stack.push({x: x + 1, y});
-            if (y > 0) stack.push({x, y: y - 1});
-            if (y < canvas.height - 1) stack.push({x, y: y + 1});
-        }
-    }
+				if (x > 0) stack.push({x: x - 1, y});
+				if (x < canvas.width - 1) stack.push({x: x + 1, y});
+				if (y > 0) stack.push({x, y: y - 1});
+				if (y < canvas.height - 1) stack.push({x, y: y + 1});
+			}
+		}
 
-    canvas.ctx.putImageData(new ImageData(data, canvas.width, canvas.height), 0, 0);
+		canvas.ctx.putImageData(new ImageData(data, canvas.width, canvas.height), 0, 0);
 
-    return canvas;
-}; // }}}
-
-
-	// canvas.floodFill = function({x, y, color=makeColor({r: 0, g: 0, b: 0, a: 255})}) { // {{{
-
-	// 	const targetColor = canvas.getPixel({x, y});
-	// 	const fillColor = color;
-
-	// 	if (targetColor.match({color2: fillColor})) {
-	// 		return;
-	// 	}
-
-	// 	const targetColorArray = targetColor.toRgbaArray();
-	// 	const fillColorArray = fillColor.toRgbaArray();
-	// 	const data = canvas.getData();
-
-	// 	const stack = [{x, y}];
-
-	// 	while (stack.length > 0) {
-	// 		const {x, y} = stack.pop();
-
-	// 		const index = (y * canvas.width + x) * 4;
-	// 		const currentColorArray = [data[index], data[index + 1], data[index + 2], data[index + 3]];
-
-	// 		if (currentColorArray[0] === targetColorArray[0] && 
-	// 			currentColorArray[1] === targetColorArray[1] &&
-	// 			currentColorArray[2] === targetColorArray[2] && 
-	// 			currentColorArray[3] === targetColorArray[3]
-	// 		) {
-	// 			data[index] = fillColorArray[0];
-	// 			data[index + 1] = fillColorArray[1];
-	// 			data[index + 2] = fillColorArray[2];
-	// 			data[index + 3] = fillColorArray[3];
-
-	// 			if (x > 0) stack.push({x: x - 1, y});
-	// 			if (x < canvas.width - 1) stack.push({x: x + 1, y});
-	// 			if (y > 0) stack.push({x, y: y - 1});
-	// 			if (y < canvas.height - 1) stack.push({x, y: y + 1});
-	// 		}
-	// 	}
-
-	// 	canvas.ctx.putImageData(new ImageData(data, canvas.width, canvas.height), 0, 0);
-
-	// 	return canvas;
-	// }; // }}}
+		return canvas;
+	}; // }}}
 
 	canvas.getPositionOnCanvas = function(e) { // {{{
 		const rect = canvas.getBoundingClientRect();
