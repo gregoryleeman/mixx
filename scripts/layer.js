@@ -4,12 +4,20 @@ function makeLayer({height=600, width=800}={}) {
 	layer.resize = function({height, width}) { // {{{
 		layer.height = height;
 		layer.width = width;
+
 		layer.drawCanvas.resize({height, width});
-		layer.cursorCanvas.resize({height, width});
+
 		layer.tempCanvas.resize({height, width});
+
 		layer.temp2Canvas.resize({height, width});
+
 		layer.selectCanvas.resize({height, width});
+
 		layer.select2Canvas.resize({height, width});
+
+		layer.cursorCanvas.resize({height, width});
+
+
 		return layer;
 	}; // }}}
 
@@ -69,15 +77,20 @@ function makeLayer({height=600, width=800}={}) {
 	layer.init = function() { // {{{
 		layer.height = height;
 		layer.width = width;
+
 		layer.drawCanvas = makeCanvas({height, width});
+
 		layer.tempCanvas = makeCanvas({height, width});
 		layer.tempCanvas.style.pointerEvents = 'none';
+
 		layer.temp2Canvas = makeCanvas({height, width});
 		layer.temp2Canvas.style.pointerEvents = 'none';
+
 		layer.selectCanvas = makeCanvas({height, width});
 		layer.selectCanvas.style.pointerEvents = 'none';
 		layer.selectCanvas.style.mixBlendMode = 'difference';
 		layer.selectCanvas.style.zIndex = 4;
+
 		layer.select2Canvas = makeCanvas({height, width});
 		layer.select2Canvas.style.pointerEvents = 'none';
 		layer.select2Canvas.style.mixBlendMode = 'difference';
@@ -87,7 +100,9 @@ function makeLayer({height=600, width=800}={}) {
 		layer.cursorCanvas.style.mixBlendMode = 'difference';
 		layer.cursorCanvas.style.pointerEvents = 'none';
 		layer.cursorCanvas.style.zIndex = 5;
+
 		const previewElement = document.createElement("img");
+		previewElement.draggable = false;
 		previewElement.className = "layer-preview";
 		layer.previewElement = previewElement;
 
@@ -102,7 +117,7 @@ function makeLayer({height=600, width=800}={}) {
 
 
 function makeLayers({easelElement, layersElement, sizeControllerElement, zoomControllerElement,
-	height=600, width=800, backgroundColor=makeColor({r: 255, g: 255, b: 255}), infoTipElement, toolTopElement}) {
+	height=600, width=800, backgroundColor=makeColor({r: 255, g: 255, b: 255}), infoTipElement, toolTopElement, shape}) {
 	if (!easelElement || !layersElement) {
 		throw new Error("easelElement and layersElement are required to make layers");
 	}
@@ -144,13 +159,52 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	}; // }}}
 
 	layers.saveToLocalStorage = function() { // {{{
-		// const currentState = JSON.stringify(layers._serialize());
-		// localStorage.setItem('layers', currentState);
-		const historyData = JSON.stringify(layers.historyStack);
-		const redoData = JSON.stringify(layers.redoStack);
-		localStorage.setItem('layersHistory', historyData);
-		localStorage.setItem('layersRedo', redoData);
+		let historyData = JSON.stringify(layers.historyStack);
+		let redoData = JSON.stringify(layers.redoStack);
 
+		try {
+			// Try to save history and redo data to localStorage
+			localStorage.setItem('layersHistory', historyData);
+			localStorage.setItem('layersRedo', redoData);
+		} catch (e) {
+			if (e.name === 'QuotaExceededError') {
+				console.warn('LocalStorage quota exceeded. Removing older history states...');
+				
+				// Remove the oldest history state until enough space is available
+				while (layers.historyStack.length > 0) {
+					layers.historyStack.shift();  // Remove the oldest state
+					historyData = JSON.stringify(layers.historyStack);
+
+					try {
+						localStorage.setItem('layersHistory', historyData);  // Retry saving
+						break;  // If successful, stop the loop
+					} catch (e) {
+						if (e.name !== 'QuotaExceededError') {
+							console.error('An error occurred while saving to localStorage:', e);
+							break;  // Stop on any error that's not quota-related
+						}
+					}
+				}
+			} else {
+				console.error('An error occurred while saving to localStorage:', e);
+			}
+		}
+
+		return layers;
+	};
+
+	// }}}
+
+	layers.save = function() { // {{{
+		const state = layers._serialize();
+		layers.historyStack.push(state);
+
+		if (layers.historyStack.length > 20) {
+			layers.historyStack.shift();
+		}
+		layers.redoStack = [];
+		layers.saveToLocalStorage();
+		
 		return layers;
 	}; // }}}
 
@@ -180,39 +234,31 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 
 		return layers;
 	}; // }}}
-
-	layers.save = function() { // {{{
-		const state = layers._serialize();
-		layers.historyStack.push(state);
-
-		if (layers.historyStack.length > 20) {
-			layers.historyStack.shift();
-		}
-		layers.redoStack = [];
-		layers.saveToLocalStorage();
-		
-		return layers;
-	}; // }}}
    
 	layers.undo = function() { // {{{
 		
 		if (layers.historyStack.length > 1) {
+
 			const currentState = layers.historyStack.pop();
 			layers.redoStack.push(currentState);
 			const previousState = layers.historyStack[layers.historyStack.length - 1];
 			layers._deserialize({state: previousState});
 			layers.saveToLocalStorage();
+
 		}
+
 
 		return layers;
 	}; // }}}
 
 	layers.redo = function() { // {{{
 		if (layers.redoStack.length > 0) {
+
 			const nextState = layers.redoStack.pop();
 			layers.historyStack.push(nextState);
 			layers._deserialize({state: nextState});
 			layers.saveToLocalStorage();
+
 		}
 
 		return layers;
@@ -257,12 +303,13 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	}; // }}}
 
 	layers.remove = function({index}) { // {{{
-		if (index > 0 && index < layers.length) {
-			layers[index].destruct();
-			layers.splice(index, 1);
-			layers.updateActive();
+		if (layers.length > 2) {
+			if (index > 0 && index < layers.length) {
+				layers[index].destruct();
+				layers.splice(index, 1);
+				layers.updateActive();
+			}
 		}
-
 		return layers;
 	}; // }}}
 
@@ -351,7 +398,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 			layer.resize({height, width});
 		});
 		if (layers.length > 0) {
-			layers[0].fill({color: layers.backgroundColor});
+			// layers[0].fill({color: layers.backgroundColor});
 		}
 
 		return layers;
@@ -393,50 +440,54 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	} // }}}
 
 	// export and import
-
-	layers.exportPng = async function() { // {{{
-		const mergedCanvas = document.createElement('canvas');
-		mergedCanvas.width = layers.width;
-		mergedCanvas.height = layers.height;
-		const mergedCtx = mergedCanvas.getContext('2d');
+	
+	layers.mergeAll = async function() { // {{{
+		const mergedCanvas = makeCanvas({height: layers.height, width: layers.width});
+		mergedCanvas.style.zIndex = 100;
+		mergedCanvas.classList.add('merged-canvas');
 
 		layers.forEach(layer => {
-			if (layer === layers[0]) return;
-			mergedCtx.drawImage(layer.drawCanvas, 0, 0);
+			if (layers.indexOf(layer) === 0) {
+			} else {
+				mergedCanvas.add({canvas2: layer.drawCanvas});
+			}
 		});
 
-		    if (window.showSaveFilePicker) {
-        // Use File System Access API if supported
-        try {
-            // Convert the canvas to a Blob
-            const pngBlob = await new Promise(resolve => mergedCanvas.toBlob(resolve, 'image/png'));
+		return mergedCanvas;
+	}; // }}}
 
-            const fileHandle = await window.showSaveFilePicker({
-                suggestedName: 'layers.png',
-                types: [{
-                    description: 'PNG Files',
-                    accept: { 'image/png': ['.png'] }
-                }]
-            });
+	layers.exportPng = async function() { // {{{
+		const mergedCanvas = await layers.mergeAll();
+	
+		if (window.showSaveFilePicker) {
+			try {
+				// Convert the canvas to a Blob
+				const pngBlob = await new Promise(resolve => mergedCanvas.toBlob(resolve, 'image/png'));
 
-            const writableStream = await fileHandle.createWritable();
-            await writableStream.write(pngBlob);
-            await writableStream.close();
-        } catch (error) {
-            console.error("Error saving PNG file:", error);
-        }
-    } else {
-        // Fallback for browsers that do not support the File System Access API
-        const pngDataUrl = mergedCanvas.toDataURL('image/png');
-        const link = document.createElement('a');
-        link.href = pngDataUrl;
-        link.download = 'layers.png'; // Default file name
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-    }
+				const fileHandle = await window.showSaveFilePicker({
+					suggestedName: 'layers.png',
+					types: [{
+						description: 'PNG Files',
+						accept: { 'image/png': ['.png'] }
+					}]
+				});
 
-    return layers;
+				const writableStream = await fileHandle.createWritable();
+				await writableStream.write(pngBlob);
+				await writableStream.close();
+			} catch (error) {
+				console.error("Error saving PNG file:", error);
+			}
+		} else {
+			// Fallback for browsers that do not support the File System Access API
+			const pngDataUrl = mergedCanvas.toDataURL('image/png');
+			const link = document.createElement('a');
+			link.href = pngDataUrl;
+			link.download = 'layers.png'; // Default file name
+			document.body.appendChild(link);
+			link.click();
+			document.body.removeChild(link);
+		}
 
 		return layers;
 	}; // }}}
@@ -560,18 +611,32 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 			layersElement.style.cursor = "pointer";
 
 			if(layer !== layers[0]) {
-				previewElement.addEventListener("click", () => {
+				previewElement.addEventListener("pointerdown", (e) => {
+					e.stopPropagation();
+					layers.getActive().tempCanvas.clear();
+					layers.getActive().temp2Canvas.clear();
+					layers.getActive().selectCanvas.clear();
+					layers.getActive().select2Canvas.clear();
+					layers.shape.polygonStart = false;
+					layers.shape.lineStart = false;
 					layers.activate({layer}).refreshController().refreshEasel();
 				});
+				previewElement.addEventListener("pointerup", (e) => {
+					e.stopPropagation();
+				});
+				previewElement.addEventListener("pointermove", (e) => {
+					e.stopPropagation();
+				});
+
 			}
 
-			previewElement.addEventListener("mouseenter", () => {
+			previewElement.addEventListener("pointerenter", () => {
 				layers.infoTipElement.innerHTML = 'Select layer.';
 				layers.toolTipElement.style.visibility = 'hidden';
 				layersElement.classList.add("hover");
 			});
 
-			previewElement.addEventListener("mouseleave", () => {
+			previewElement.addEventListener("pointerleave", () => {
 				layers.infoTipElement.innerHTML = 'mixx.';
 				layers.toolTipElement.style.visibility = 'visible';
 				layersElement.classList.remove("hover");
@@ -598,10 +663,10 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 			layers.resize({height: parseInt(heightInput.value), width: layers.width}).save().refresh();
 		});
 
-		heightInputWrapper.addEventListener("mouseenter", () => {
+		heightInputWrapper.addEventListener("pointerenter", () => {
 			layers.infoTipElement.innerHTML = 'Change canvas height.';
 		});
-		heightInputWrapper.addEventListener("mouseleave", () => {
+		heightInputWrapper.addEventListener("pointerleave", () => {
 			layers.infoTipElement.innerHTML = 'mixx.';
 		});
 
@@ -619,10 +684,10 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 			layers.resize({height: layers.height, width: parseInt(widthInput.value)}).save().refresh();
 		});
 
-		widthInputWrapper.addEventListener("mouseenter", () => {
+		widthInputWrapper.addEventListener("pointerenter", () => {
 			layers.infoTipElement.innerHTML = 'Change canvas width.';
 		});
-		widthInputWrapper.addEventListener("mouseleave", () => {
+		widthInputWrapper.addEventListener("pointerleave", () => {
 			layers.infoTipElement.innerHTML = 'mixx.';
 		});
 
@@ -645,10 +710,10 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 			layers.zoom({scale: parseInt(zoomInput.value)}).refresh();
 		});
 
-		zoomInputWrapper.addEventListener("mouseenter", () => {
+		zoomInputWrapper.addEventListener("pointerenter", () => {
 			layers.infoTipElement.innerHTML = 'Change canvas zoom.';
 		});
-		zoomInputWrapper.addEventListener("mouseleave", () => {
+		zoomInputWrapper.addEventListener("pointerleave", () => {
 			layers.infoTipElement.innerHTML = 'mixx.';
 		});
 
@@ -703,10 +768,12 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		layers.toolTipElement = toolTipElement;
 		layers.sizeControllerElement = sizeControllerElement;
 		layers.zoomControllerElement = zoomControllerElement;
+		layers.shape = shape;
 		layers.activeIndex = 1;
 		layers.clear();
 		layers.zoom({scale: 1});
-		layers.push(makeLayer({height: layers.height, width: layers.width}).fill({color: layers.backgroundColor}));
+		layers.push(makeLayer({height: layers.height, width: layers.width}));
+		// layers.push(makeLayer({height: layers.height, width: layers.width}).fill({color: layers.backgroundColor}));
 		layers.push(makeLayer({height: layers.height, width: layers.width}));
 
 		return layers;

@@ -8,7 +8,7 @@ function makePucks({controllerElement, brushColor, interval, infoTipElement}) {
 			element.style.backgroundColor = puck.color.toRgbString();
 			element.className = 'puck';
 
-			element.addEventListener('mousedown', (e) => {
+			element.addEventListener('pointerdown', (e) => {
 				const startTime = Date.now();
 				interval = setInterval(() => {
 					const elapsedTime = Date.now() - startTime;
@@ -17,15 +17,15 @@ function makePucks({controllerElement, brushColor, interval, infoTipElement}) {
 				}, 50);
 			});
 
-			element.addEventListener('mouseenter', (e) => {
+			element.addEventListener('pointerenter', (e) => {
 				infoTipElement.innerHTML = `${puck.color.name} (click and hold to mix with current brush color).`;
 			});
 
-			element.addEventListener('mouseup', (e) => {
+			element.addEventListener('pointerup', (e) => {
 				clearInterval(interval);
 			});
 
-			element.addEventListener('mouseleave', (e) => {
+			element.addEventListener('pointerleave', (e) => {
 				clearInterval(interval);
 				infoTipElement.innerHTML = 'mixx.';
 			});

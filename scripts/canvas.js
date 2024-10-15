@@ -110,7 +110,7 @@ function makeCanvas({height, width}) {
 		return canvas;
 	} // }}}
 
-	canvas.drawRect = function({x, y, width, height, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
+	canvas.drawRectCustom = function({x, y, width, height, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 		x = Math.round(x);
 		y = Math.round(y);
 		width = Math.round(width);
@@ -124,8 +124,43 @@ function makeCanvas({height, width}) {
 		return canvas;
 	}; // }}}
 
+	canvas.drawRotatedSquare = function({x, y, width, angle, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
+		canvas.ctx.save();
+		// Disable image smoothing explicitly (though it won't affect manual pixel drawing)
+		canvas.ctx.imageSmoothingEnabled = false;
+
+		// Calculate the half width to center the square
+		const halfWidth = width / 2;
+
+		// Loop through every pixel in the square's bounding box
+		for (let px = -halfWidth; px < halfWidth; px++) {
+			for (let py = -halfWidth; py < halfWidth; py++) {
+				// Calculate the rotated coordinates for each pixel
+				const rotatedX = Math.round(px * Math.cos(angle) - py * Math.sin(angle));
+				const rotatedY = Math.round(px * Math.sin(angle) + py * Math.cos(angle));
+
+				// Translate the rotated coordinates back to the center (x, y)
+				const finalX = Math.round(x + rotatedX);
+				const finalY = Math.round(y + rotatedY);
+
+				// Ensure the pixel is within canvas bounds
+				if (finalX >= 0 && finalX < canvas.width && finalY >= 0 && finalY < canvas.height) {
+					if (erase === true) {
+						canvas.ctx.clearRect(finalX, finalY, 1, 1);
+					} else {
+						// Draw a single pixel (1x1 rect) at the calculated position
+						canvas.ctx.fillStyle = color.toRgbaString();
+						canvas.ctx.fillRect(finalX, finalY, 1, 1);
+					}
+				}
+			}
+		}
+
+		return canvas;
+	}; // }}}
+
 	canvas.clear = function() { // {{{
-		canvas.drawRect({
+		canvas.drawRectCustom({
 			x: 0,
 			y: 0,
 			width: canvas.width,
@@ -137,7 +172,7 @@ function makeCanvas({height, width}) {
 	}; // }}}
 
 	canvas.fillAll = function({color=makeColor({r: 0, g: 0, b: 0, a: 255})}) { // {{{
-		canvas.drawRect({
+		canvas.drawRectCustom({
 			x: 0,
 			y: 0,
 			width: canvas.width,
@@ -162,7 +197,7 @@ function makeCanvas({height, width}) {
 	}; // }}}
 
 	canvas.drawPixel = function({x, y, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
-		canvas.drawRect({
+		canvas.drawRectCustom({
 			x,
 			y,
 			width: 1,
@@ -358,10 +393,10 @@ function makeCanvas({height, width}) {
 	canvas.drawEmptyRectangle = function({x, y, width, height, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 		width = Math.round(width);
 		height = Math.round(height);
-		canvas.drawRect({x: x, y: y, width: width + 1, height: 1, color, erase});
-		canvas.drawRect({x: x, y: y, width: 1, height: height + 1, color, erase});
-		canvas.drawRect({x: x, y: y + height, width: width + 1, height: 1, color, erase});
-		canvas.drawRect({x: x + width, y: y, width: 1, height: height + 1, color, erase});
+		canvas.drawRectCustom({x: x, y: y, width: width + 1, height: 1, color, erase});
+		canvas.drawRectCustom({x: x, y: y, width: 1, height: height + 1, color, erase});
+		canvas.drawRectCustom({x: x, y: y + height, width: width + 1, height: 1, color, erase});
+		canvas.drawRectCustom({x: x + width, y: y, width: 1, height: height + 1, color, erase});
 		return canvas, x, y, width, height
 	}; // }}}
 
@@ -377,7 +412,7 @@ function makeCanvas({height, width}) {
 		for (let y1 = -radius; y1 <= radius; y1++) {
 			for (let x1 = -radius; x1 <= radius; x1++) {
 				if ((x1 * x1 + y1 * y1) < radiusSquared) {
-					canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+					canvas.drawRectCustom({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
 				}
 			}
 		}
@@ -394,7 +429,7 @@ function makeCanvas({height, width}) {
 		for (let y1 = -radiusY; y1 <= radiusY; y1++) {
 			for (let x1 = -radiusX; x1 <= radiusX; x1++) {
 				if ((x1 * x1 / radiusXSquared + y1 * y1 / radiusYSquared) <= 1) {
-					canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+					canvas.drawRectCustom({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
 				}
 			}
 		}
@@ -411,7 +446,7 @@ function makeCanvas({height, width}) {
 		for (let y1 = -radiusY; y1 <= radiusY; y1++) {
 			for (let x1 = -radiusX; x1 <= radiusX; x1++) {
 				if ((x1 * x1 / radiusXSquared + y1 * y1 / radiusYSquared) <= 1 && (x1 * x1 / radiusXSquared + y1 * y1 / radiusYSquared) >= 0.9) {
-					canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+					canvas.drawRectCustom({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
 				}
 			}
 		}
@@ -434,7 +469,7 @@ function makeCanvas({height, width}) {
 
 				// Check if the point is exactly on the circumference of the filled circle
 				if (distanceSquared >= radiusSquared - radius && distanceSquared < radiusSquared) {
-					canvas.drawRect({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
+					canvas.drawRectCustom({x: x + x1, y: y + y1, width: 1, height: 1, color, erase});
 				}
 			}
 		}
@@ -442,27 +477,76 @@ function makeCanvas({height, width}) {
 		return canvas;
 	}; // }}}
 
-	canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
-		if (diameter === 1) {
+	// canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
+	// 	if (diameter === 1) {
+	// 		canvas.drawLineWithPixels({x1, y1, x2, y2, color, erase});
+	// 		return canvas;
+	// 	}
+	// 	const dx = x2 - x1;
+	// 	const dy = y2 - y1;
+	// 	const distance = Math.sqrt(dx * dx + dy * dy);
+	// 	const steps = Math.ceil(distance / (diameter / 4));
+	// 	for (let i = 0; i <= steps; i++) {
+	// 		const x = Math.round(x1 + (dx * i) / steps);
+	// 		const y = Math.round(y1 + (dy * i) / steps);
+	// 		canvas.drawCircle({x, y, diameter, color, erase});
+	// 	}
+
+	// 	return canvas;
+	// }; // }}}
+
+canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) {
+    // Bresenham-like approach to manually draw the line with pixel-perfect control
+    const dx = Math.abs(x2 - x1);
+    const dy = Math.abs(y2 - y1);
+    const sx = x1 < x2 ? 1 : -1;
+    const sy = y1 < y2 ? 1 : -1;
+    let err = dx - dy;
+
+    while (true) {
+        // Draw a pixel-perfect circle at the current position
+        canvas.drawCircle({x: x1, y: y1, diameter, color, erase});
+
+        // Break when the line reaches the destination
+        if (x1 === x2 && y1 === y2) break;
+
+        const e2 = 2 * err;
+
+        if (e2 > -dy) {
+            err -= dy;
+            x1 += sx;
+        }
+
+        if (e2 < dx) {
+            err += dx;
+            y1 += sy;
+        }
+    }
+
+    return canvas;
+};
+
+	canvas.drawLineWithRotatedSquares = function({x1, y1, x2, y2, width, color=makeColor({r: 0, g: 0, b: 0, a: 255}), angle=0, erase=false}) { // {{{
+		if (width === 1) {
 			canvas.drawLineWithPixels({x1, y1, x2, y2, color, erase});
 			return canvas;
 		}
 		const dx = x2 - x1;
 		const dy = y2 - y1;
 		const distance = Math.sqrt(dx * dx + dy * dy);
-		const steps = Math.ceil(distance / (diameter / 4));
+		const steps = Math.ceil(distance / (width / 4));
 		for (let i = 0; i <= steps; i++) {
 			const x = Math.round(x1 + (dx * i) / steps);
 			const y = Math.round(y1 + (dy * i) / steps);
-			canvas.drawCircle({x, y, diameter, color, erase});
+			canvas.drawRotatedSquare({x, y, width, angle, color, erase});
 		}
-
 		return canvas;
 	}; // }}}
 
+
 	canvas.drawCrossHairs = function({x, y, length=5, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
-		canvas.drawRect({x: x - length, y, width: length * 2 + 1, height: 1, color, erase});
-		canvas.drawRect({x, y: y - length, width: 1, height: length * 2 +1, color, erase});
+		canvas.drawRectCustom({x: x - length, y, width: length * 2 + 1, height: 1, color, erase});
+		canvas.drawRectCustom({x, y: y - length, width: 1, height: length * 2 +1, color, erase});
 
 		return canvas;
 	} // }}}

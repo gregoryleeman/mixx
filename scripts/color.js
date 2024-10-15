@@ -116,10 +116,10 @@ function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined, name=unde
 	color.refreshController = function() { // {{{
 		controllerElement.style.backgroundColor = color.toRgbaString();
 		if (name && infoTipElement) {
-			controllerElement.addEventListener("mouseenter", () => {
+			controllerElement.addEventListener("pointerenter", () => {
 				infoTipElement.innerHTML = `${name}.`;
 			});
-			controllerElement.addEventListener("mouseleave", () => {
+			controllerElement.addEventListener("pointerleave", () => {
 				infoTipElement.innerHTML = 'mixx.';
 			});
 		}

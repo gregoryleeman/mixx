@@ -18,6 +18,20 @@
 	box-sizing: border-box;
 	font-family: 'VT323', monospace;
 	font-size: 16px;
+    -webkit-user-select: none;  /* Safari and iOS */
+    -ms-user-select: none;      /* Internet Explorer/Edge */
+    user-select: none;          /* Standard */
+}
+
+html {
+	/* width: 100vw; */
+	/* height: 100vh; */
+}
+
+html, body, canvas {
+    -webkit-touch-callout: none; /* Disable callout, like when long-pressing links */
+    -webkit-tap-highlight-color: transparent; /* Remove the tap highlight */
+    touch-action: none; /* Disable any browser default touch behavior */
 }
 
 body {
@@ -52,6 +66,15 @@ body {
         drop-shadow(0 -1px 0 white);
 }
 
+#easel {
+	background-size: 40px 40px;
+	background-image: 
+		linear-gradient(45deg, var(--grey) 25%, transparent 25%, transparent 75%, var(--grey) 75%, var(--grey)),
+		linear-gradient(45deg, var(--grey) 25%, transparent 25%, transparent 75%, var(--grey) 75%, var(--grey));
+	background-position: 0 0, 20px 20px;
+	background-color: var(--darkgrey);
+}
+
 #row {
 	display: flex;
 	flex-direction: row;
@@ -80,6 +103,19 @@ body {
 }
 
 #commands, #colors {
+	display: flex;
+	/* flex-shrink: 0; */
+	flex-direction: row;
+	/* flex-wrap: wrap; */
+	gap: 4px;
+}
+
+#colors {
+	flex-wrap: wrap;
+}
+
+#options {
+	flex-grow: 2;
 	display: flex;
 	flex-direction: row;
 	flex-wrap: wrap;
@@ -142,11 +178,12 @@ canvas {
 	border-left: 2px solid var(--darkgrey);
 }
 
-.tool-button, .command-button {
+.tool-button, .command-button, .option-button {
 	position: relative;
 	width: 38px;
 	height: 38px;
 	display: flex;
+	flex-shrink: 0;
 	flex-direction: row;
 	align-items: center;
 	justify-content: center;
@@ -155,7 +192,7 @@ canvas {
 	justify-self: flex-end !important;
 }
 
-.tool-button > img, .command-button > img {
+.tool-button > img, .command-button > img, .option-button > img {
 	width: 22px;
 	height: 22px;
 	object-fit: contain;
@@ -166,7 +203,7 @@ canvas {
 	width: 12px !important;
 	height: 12px !important;
 	color: white;
-	top: 2px;
+	bottom: 2px;
 	right: 2px;
 }
 
@@ -200,6 +237,7 @@ canvas {
 	border-left: 2px solid var(--darkgrey);
 	border-bottom: 2px solid var(--lightergrey);
 	border-right: 2px solid var(--lightergrey);
+	flex-shrink: 0;
 }
 
 #layers {
@@ -213,6 +251,13 @@ canvas {
 	justify-content: flex-start;
 	overflow-y: scroll;
 	min-height: 0;
+	padding: 0;
+	scrollbar-width: none;
+	-ms-overflow-style: none;
+}
+
+#layers::-webkit-scrollbar {
+	display: none;
 }
 
 .layer {
@@ -222,9 +267,16 @@ canvas {
 	display: flex;
 	justify-content: center;
 	align-items: center;
-	border-top: 1px solid var(--black);
-	border-left: 1px solid var(--black);
-	border-right: 1px solid var(--black);
+	/* border-top: 1px solid var(--black); */
+	/* border-left: 1px solid var(--black); */
+	/* border-right: 1px solid var(--black); */
+	/* border-bottom: 1px solid var(--black); */
+	border: 1px solid var(--black);
+
+}
+
+.layer:first-child {
+	display: none !important;
 }
 
 .layer:nth-child(1) {
@@ -272,7 +324,7 @@ canvas {
 	display: flex;
 	flex-direction: row;
 	gap: 4px;
-	flex-wrap: wrap;
+	flex-wrap: nowrap;
 }
 
 .size-input, .brush-size-input, .zoom-input {
@@ -334,6 +386,9 @@ canvas {
 	padding-top: 4px;
 	background-color: var(--lightgrey);
 	z-index: 5;
+	overflow: hidden;
+	white-space: nowrap;
+	flex-shrink: 0;
 }
 
 #version {
@@ -342,4 +397,37 @@ canvas {
 	right: 0;
 	padding: 4px;
 	z-index: 6;
+}
+
+@media only screen and (max-width: 768px) {
+	#left-bar, #right-bar {
+		overflow-y: scroll;
+		flex-wrap: nowrap;
+		/* padding-bottom: 8px; */
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+
+	#left-bar::-webkit-scrollbar,
+	#right-bar::-webkit-scrollbar,
+	#top-bar::-webkit-scrollbar,
+	#bottom-bar::-webkit-scrollbar {
+		display: none;
+	}
+
+	#colors {
+		flex-wrap: nowrap;
+	}
+
+	#top-bar, #bottom-bar {
+		overflow-x: scroll;
+		overflow-y: hidden;
+		flex-shrink: 0;
+		/* height: max-content; */
+		flex-wrap: nowrap;
+		/* padding-bottom: 10px; */
+		scrollbar-width: none;
+		-ms-overflow-style: none;
+	}
+	
 }

@@ -38,19 +38,19 @@ function makeCommands({controllerElement, infoTipElement}) {
 			button.classList.add('button');
 			button.classList.add('command-button');
 			button.innerHTML = `<img src="${command.iconPath}" alt="${command.name}">`;
-			button.addEventListener("click", () => {
+			button.addEventListener("pointerdown", () => {
 				command.func();
 			});
-			button.addEventListener("mouseenter", () => {
+			button.addEventListener("pointerenter", () => {
 				commands.infoTipElement.innerHTML = command.info;
 				if (command.key) {
 					commands.infoTipElement.innerHTML += ` Hotkey: '${command.key}'.`;
 				}
 			});
-			button.addEventListener("mouseleave", () => {
+			button.addEventListener("pointerleave", () => {
 				commands.infoTipElement.innerHTML = 'mixx.';
 			});
-			// button.addEventListener("mousemove", (event) => {
+			// button.addEventListener("pointermove", (event) => {
 			// 	commands.infoTipElement.style.left = `${event.clientX + 20}px`;
 			// 	commands.infoTipElement.style.top = `${event.clientY + 20}px`;
 			// });

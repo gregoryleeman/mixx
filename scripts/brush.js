@@ -14,10 +14,10 @@ function makeBrush({sizeControllerElement, infoTipElement}) {
 			brush.changeSize({size: sizeInput.value});
 		});
 
-		sizeInputWrapper.addEventListener("mouseenter", () => {
+		sizeInputWrapper.addEventListener("pointerenter", () => {
 			brush.infoTipElement.innerHTML = 'Change brush size.';
 		});
-		sizeInputWrapper.addEventListener("mouseleave", () => {
+		sizeInputWrapper.addEventListener("pointerleave", () => {
 			brush.infoTipElement.innerHTML = 'mixx.';
 		});
 
@@ -37,6 +37,13 @@ function makeBrush({sizeControllerElement, infoTipElement}) {
 		return brush;
 	}
 
+	brush.getSize = function({pressure}) {
+		if (pressure !== undefined) {
+			const size = Math.round(Math.max(1, brush.size*2*pressure));
+			return size;
+		}
+		return brush.size;
+	}
 
 	brush.init = function() {
 		brush.size = 10;

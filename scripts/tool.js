@@ -60,6 +60,7 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 	} // }}}
 
 	tools.activate = function({tool}) { // {{{
+		console.log(`activating ${tool.name}`);
 		if (tools.active) {
 			tools.previous = tools.active;
 		}
@@ -92,15 +93,15 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 			if (tool === tools.active) {
 				button.classList.add("active");
 			}
-			button.innerHTML = `<img src="${tool.iconPath}" alt="${tool.name}">`;
+			button.innerHTML = `<img src="${tool.iconPath}" alt="${tool.name}" draggable="false">`;
 			if (tool.subIconPath) {
-				button.innerHTML += `<img class="sub-icon" src="${tool.subIconPath}" alt="${tool.name}">`;
+				button.innerHTML += `<img class="sub-icon" src="${tool.subIconPath}" alt="${tool.name}" draggable="false">`;
 			}
-			button.addEventListener("click", () => {
+			button.addEventListener("pointerdown", () => {
 				tools.activate({tool}).refresh();
 			});
 
-			button.addEventListener("mouseenter", () => {
+			button.addEventListener("pointerenter", () => {
 				tools.infoTipElement.innerHTML = tool.info;
 				if (tool.key) {
 					tools.infoTipElement.innerHTML += ` Hotkey: '${tool.key.toUpperCase()}' (temporary: '${tool.key.toLowerCase()}')`;
@@ -108,7 +109,7 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 
 			});
 
-			button.addEventListener("mouseleave", () => {
+			button.addEventListener("pointerleave", () => {
 				// tools.infoTipElement.style.display = "none";
 				tools.infoTipElement.innerHTML = 'mixx.';
 			});
@@ -139,7 +140,7 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 
 	tools.refreshToolTip = function() { // {{{
 		if (tools.active) {
-			tools.toolTipElement.innerHTML = `<img src="${tools.active.iconPath}" alt="${tools.active.name}">`;
+			tools.toolTipElement.innerHTML = `<img src="${tools.active.iconPath}" alt="${tools.active.name}" draggable="false">`;
 		}
 		return tools;
 	}; // }}}
