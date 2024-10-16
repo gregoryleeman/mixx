@@ -1,9 +1,10 @@
-function makeCommand({name, info, key=undefined, iconPath, func}) {
+function makeCommand({name, info, key=undefined, iconPath, subIconPath=undefined, func}) {
 	const command = {};
 	command.name = name;
 	command.info = info;
 	command.key = key;
 	command.iconPath = iconPath;
+	command.subIconPath = subIconPath;
 	command.func = function() {
 		func();
 	}
@@ -17,8 +18,8 @@ function makeCommands({controllerElement, infoTipElement}) {
 	commands.controllerElement = controllerElement;
 	commands.infoTipElement = infoTipElement;
 
-	commands.add = function({name, info, key, iconPath, func}) {
-		const command = makeCommand({name, info, key, iconPath, func});
+	commands.add = function({name, info, key, iconPath, func, subIconPath=undefined}) {
+		const command = makeCommand({name, info, key, iconPath, func, subIconPath});
 		commands.push(command);
 	};
 
@@ -37,7 +38,11 @@ function makeCommands({controllerElement, infoTipElement}) {
 			const button = document.createElement('button');
 			button.classList.add('button');
 			button.classList.add('command-button');
-			button.innerHTML = `<img src="${command.iconPath}" alt="${command.name}">`;
+			button.innerHTML = `<img src="${command.iconPath}" alt="${command.name}" draggable="false">`;
+			console.log(command.subIconPath);
+			if (command.subIconPath) {
+				button.innerHTML += `<img class="sub-icon" src="${command.subIconPath}" alt="${command.name}" draggable="false" draggable="false">`;
+			}
 			button.addEventListener("pointerdown", () => {
 				command.func();
 			});

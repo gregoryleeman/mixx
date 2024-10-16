@@ -1,21 +1,21 @@
-function makeLayer({height=600, width=800}={}) {
+function makeLayer({height=600, width=800, zoom=1}={}) {
 	const layer = {};
 
-	layer.resize = function({height, width}) { // {{{
+	layer.resize = function({height, width, scale=1}) { // {{{
 		layer.height = height;
 		layer.width = width;
 
-		layer.drawCanvas.resize({height, width});
+		layer.drawCanvas.resize({height, width, scale});
 
-		layer.tempCanvas.resize({height, width});
+		layer.tempCanvas.resize({height, width, scale});
 
-		layer.temp2Canvas.resize({height, width});
+		layer.temp2Canvas.resize({height, width, scale});
 
-		layer.selectCanvas.resize({height, width});
+		layer.selectCanvas.resize({height, width, scale});
 
-		layer.select2Canvas.resize({height, width});
+		layer.select2Canvas.resize({height, width, scale});
 
-		layer.cursorCanvas.resize({height, width});
+		layer.cursorCanvas.resize({height, width, scale});
 
 
 		return layer;
@@ -50,6 +50,15 @@ function makeLayer({height=600, width=800}={}) {
 
 		return layer;
 	} // }}}
+
+	layer.zoom = function({scale}) { // {{{
+		layer.drawCanvas.zoom({scale});
+		layer.cursorCanvas.zoom({scale});
+		layer.tempCanvas.zoom({scale});
+		layer.temp2Canvas.zoom({scale});
+		layer.selectCanvas.zoom({scale});
+		layer.select2Canvas.zoom({scale});
+	}; // }}}
 
 	// init
 	
@@ -101,6 +110,8 @@ function makeLayer({height=600, width=800}={}) {
 		layer.cursorCanvas.style.pointerEvents = 'none';
 		layer.cursorCanvas.style.zIndex = 5;
 
+		layer.zoom({scale: zoom});
+
 		const previewElement = document.createElement("img");
 		previewElement.draggable = false;
 		previewElement.className = "layer-preview";
@@ -117,7 +128,7 @@ function makeLayer({height=600, width=800}={}) {
 
 
 function makeLayers({easelElement, layersElement, sizeControllerElement, zoomControllerElement,
-	height=600, width=800, backgroundColor=makeColor({r: 255, g: 255, b: 255}), infoTipElement, toolTopElement, shape}) {
+	height=600, width=800, infoTipElement, toolTopElement, shape}) {
 	if (!easelElement || !layersElement) {
 		throw new Error("easelElement and layersElement are required to make layers");
 	}
@@ -137,7 +148,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		};
 	}; // }}}
 
-	layers._deserialize = function({state}) { // {{{
+	layers._deserializeReplace = function({state}) { // {{{
 		layers.clear(); 
 
 		layers.height = state.height;
@@ -150,6 +161,29 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 			layers.push(layer);
 
 			return layer.drawCanvas.fromDataUrl({ dataUrl: layerState.drawCanvasData });
+		});
+
+		Promise.all(loadPromises).then(() => {
+			layers.updateActive().zoom({scale: layers.zoomScale});
+			layers.refreshPreviews();
+		});
+	}; // }}}
+
+	layers._deserializeAdd = function({state}) { // {{{
+
+		const height = Math.max(layers.height, state.height);
+		const width = Math.max(layers.width, state.width);
+		layers.resize({height: layers.height, width: layers.width});
+		// layers.easelElement.style.height = `${layers.height + 2}px`;
+		// layers.easelElement.style.width = `${layers.width + 2}px`;
+
+		const loadPromises = state.layersData.map(layerState => {
+			const layer = makeLayer({ height: height, width: width });
+			layers.push(layer);
+
+			return layer.drawCanvas.fromDataUrl({ dataUrl: layerState.drawCanvasData }).then((canvas) => {
+				canvas.resize({height, width});
+			});
 		});
 
 		Promise.all(loadPromises).then(() => {
@@ -209,14 +243,6 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	}; // }}}
 
 	layers.loadFromLocalStorage = function() { // {{{
-		// const currentState = localStorage.getItem('layers');
-		// if (currentState) {
-		// 	const state = JSON.parse(currentState);
-		// 	layers._deserialize({ state });
-		// 	layers.historyStack = [];
-		// 	layers.redoStack = [];
-		// } else {
-		// }
 		const historyData = localStorage.getItem('layersHistory');
 		const redoData = localStorage.getItem('layersRedo');
 		if (historyData) {
@@ -227,7 +253,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		}
 		if (layers.historyStack.length > 0) {
 			const lastState = layers.historyStack[layers.historyStack.length - 1];
-			layers._deserialize({state: lastState});
+			layers._deserializeReplace({state: lastState});
 		} else {
 			layers.save();
 		}
@@ -242,7 +268,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 			const currentState = layers.historyStack.pop();
 			layers.redoStack.push(currentState);
 			const previousState = layers.historyStack[layers.historyStack.length - 1];
-			layers._deserialize({state: previousState});
+			layers._deserializeReplace({state: previousState});
 			layers.saveToLocalStorage();
 
 		}
@@ -256,7 +282,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 
 			const nextState = layers.redoStack.pop();
 			layers.historyStack.push(nextState);
-			layers._deserialize({state: nextState});
+			layers._deserializeReplace({state: nextState});
 			layers.saveToLocalStorage();
 
 		}
@@ -303,8 +329,8 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	}; // }}}
 
 	layers.remove = function({index}) { // {{{
-		if (layers.length > 2) {
-			if (index > 0 && index < layers.length) {
+		if (layers.length > 1) {
+			if (index > -1 && index < layers.length) {
 				layers[index].destruct();
 				layers.splice(index, 1);
 				layers.updateActive();
@@ -355,7 +381,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	}; // }}}
 
 	layers.moveUp = function({index}) { // {{{
-		if (index === 0 || index === layers.length - 1) return layers;
+		if (index === layers.length - 1) return layers;
 		layers.switchIndex({index1: index, index2: index + 1});
 		layers.activeIndex = index + 1;
 
@@ -363,7 +389,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	}; // }}}
 
 	layers.moveDown = function({index}) { // {{{
-		if (index === 0 || index === 1) return layers;
+		if (index === 0) return layers;
 		layers.switchIndex({index1: index, index2: index - 1});
 		layers.activeIndex = index - 1;
 
@@ -371,7 +397,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	}; // }}}
 
 	layers.mergeDown = function({index}) { // {{{
-		if (index === 0 || index === 1) return layers;
+		if (index === 0) return layers;
 		layers.mergeIndex({index2: index, index1: index - 1});
 		layers.activeIndex = index - 1;
 
@@ -379,7 +405,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	}; // }}}
 
 	layers.duplicate = function({index}) { // {{{
-		const newLayer = makeLayer({height: layers.height, width: layers.width});
+		const newLayer = makeLayer({height: layers.height, width: layers.width, zoom: layers.zoomScale});
 		newLayer.add({layer2: layers[index]});
 		layers.splice(index + 1, 0, newLayer);
 		layers.activeIndex = index + 1;
@@ -392,36 +418,31 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	layers.resize = function({height, width}) { // {{{
 		layers.height = height;
 		layers.width = width;
-		layers.easelElement.style.height = `${height + 2}px`;
-		layers.easelElement.style.width = `${width + 2}px`;
 		layers.forEach(layer => {
-			layer.resize({height, width});
+			layer.resize({height, width, scale: layers.zoomScale});
 		});
-		if (layers.length > 0) {
-			// layers[0].fill({color: layers.backgroundColor});
-		}
-
+		easelElement.style.width = `${layers.width * layers.zoomScale + 2}px`;
+		easelElement.style.height = `${layers.height * layers.zoomScale + 2}px`;
+		easelElement.style.backgroundSize = `${40 * layers.zoomScale}px ${40 * layers.zoomScale}px`;
+		easelElement.style.backgroundPosition = `0 0, ${20 * layers.zoomScale}px ${20 * layers.zoomScale}px`;
 		return layers;
 	}; // }}}
 
 	layers.zoom = function({scale}) { // {{{
-		if (scale <= 1) {
-			scale = 1;
-		}
-		if (scale >= 16) {
-			scale = 16;
+		// if (scale <= 1) {
+		// 	scale = 1;
+		// }
+		if (scale >= 20) {
+			scale = 20;
 		}
 		layers.zoomScale = scale;
 		layers.forEach(layer => {
-			layer.drawCanvas.zoom({scale});
-			layer.cursorCanvas.zoom({scale});
-			layer.tempCanvas.zoom({scale});
-			layer.temp2Canvas.zoom({scale});
-			layer.selectCanvas.zoom({scale});
-			layer.select2Canvas.zoom({scale});
+			layer.zoom({scale});
 		});
 		easelElement.style.width = `${layers.width * scale + 2}px`;
 		easelElement.style.height = `${layers.height * scale + 2}px`;
+		easelElement.style.backgroundSize = `${40 * scale}px ${40 * scale}px`;
+		easelElement.style.backgroundPosition = `0 0, ${20 * scale}px ${20 * scale}px`;
 		return layers;
 	} // }}}
 
@@ -447,10 +468,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		mergedCanvas.classList.add('merged-canvas');
 
 		layers.forEach(layer => {
-			if (layers.indexOf(layer) === 0) {
-			} else {
-				mergedCanvas.add({canvas2: layer.drawCanvas});
-			}
+			mergedCanvas.add({canvas2: layer.drawCanvas});
 		});
 
 		return mergedCanvas;
@@ -479,11 +497,19 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 				console.error("Error saving PNG file:", error);
 			}
 		} else {
-			// Fallback for browsers that do not support the File System Access API
+			// // Fallback for browsers that do not support the File System Access API
+			// const pngDataUrl = mergedCanvas.toDataURL('image/png');
+			// const link = document.createElement('a');
+			// link.href = pngDataUrl;
+			// link.download = 'layers.png'; // Default file name
+			// document.body.appendChild(link);
+			// link.click();
+			// document.body.removeChild(link);
+			const fileName = prompt('Enter a name for the file:', 'layers.png');
 			const pngDataUrl = mergedCanvas.toDataURL('image/png');
 			const link = document.createElement('a');
 			link.href = pngDataUrl;
-			link.download = 'layers.png'; // Default file name
+			link.download = fileName || 'layers.png'; // Use the user-provided name or default if empty
 			document.body.appendChild(link);
 			link.click();
 			document.body.removeChild(link);
@@ -537,8 +563,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		}
 	}; // }}}
 
-	layers.importBlob = function() { // {{{
-		// Create a hidden file input element
+	layers.importBlob = function({add=false}) { // {{{
 		const fileInput = document.createElement('input');
 		fileInput.type = 'file';
 		fileInput.style.display = 'none'; // Hide the input
@@ -550,15 +575,16 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 				const reader = new FileReader();
 				reader.onload = function(e) {
 					try {
-						const state = JSON.parse(e.target.result); // Parse the JSON content
-						layers._deserialize({ state }); // Deserialize into the application state
-
-						// Clear history and redo stacks after importing new layers
-						layers.historyStack = [];
-						layers.redoStack = [];
+						const state = JSON.parse(e.target.result);
+						if (add) {
+							layers._deserializeAdd({ state });
+						} else {
+							layers._deserializeReplace({ state });
+						}
 
 						// Save the imported state to local storage
-						layers.saveToLocalStorage();
+						// layers.saveToLocalStorage();
+						layers.save();
 						layers.updateActive().refresh();
 
 					} catch (error) {
@@ -567,6 +593,56 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 				};
 
 				reader.readAsText(file); // Read the file content as text
+			}
+
+			// Cleanup: Remove the file input from the DOM
+			document.body.removeChild(fileInput);
+		});
+
+		// Append the file input to the body
+		document.body.appendChild(fileInput);
+
+		// Programmatically trigger a click on the file input to open the file chooser
+		fileInput.click();
+	}; // }}}
+
+	layers.importImage = function({add=false}) { // {{{
+		const fileInput = document.createElement('input');
+		fileInput.type = 'file';
+		fileInput.accept = 'image/*'; // Allow only image files
+		fileInput.style.display = 'none'; // Hide the input
+
+		// Add an event listener to handle the file selection
+		fileInput.addEventListener('change', function(event) {
+			const file = event.target.files[0]; // Get the selected file
+			if (file) {
+				const reader = new FileReader();
+				reader.onload = function(e) {
+					const image = new Image();
+					image.onload = function() {
+						const height = Math.max(layers.height, image.height);
+						const width = Math.max(layers.width, image.width);
+						layers.resize({height, width});
+
+						const layer = makeLayer({height, width, zoom: layers.zoomScale});
+						layer.drawCanvas.fromImage({image});
+
+						if (add) {
+							layers.push(layer);
+						} else {
+							layers.clear();
+							layers.push(layer);
+						}
+
+						layers.resize({height, width});
+
+						layers.updateActive().refresh();
+					};
+
+					image.src = e.target.result;
+				};
+
+				reader.readAsDataURL(file); // Read the file content as a data URL
 			}
 
 			// Cleanup: Remove the file input from the DOM
@@ -610,25 +686,22 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 			layersElement.appendChild(previewElement);
 			layersElement.style.cursor = "pointer";
 
-			if(layer !== layers[0]) {
-				previewElement.addEventListener("pointerdown", (e) => {
-					e.stopPropagation();
-					layers.getActive().tempCanvas.clear();
-					layers.getActive().temp2Canvas.clear();
-					layers.getActive().selectCanvas.clear();
-					layers.getActive().select2Canvas.clear();
-					layers.shape.polygonStart = false;
-					layers.shape.lineStart = false;
-					layers.activate({layer}).refreshController().refreshEasel();
-				});
-				previewElement.addEventListener("pointerup", (e) => {
-					e.stopPropagation();
-				});
-				previewElement.addEventListener("pointermove", (e) => {
-					e.stopPropagation();
-				});
-
-			}
+			previewElement.addEventListener("pointerdown", (e) => {
+				e.stopPropagation();
+				layers.getActive().tempCanvas.clear();
+				layers.getActive().temp2Canvas.clear();
+				layers.getActive().selectCanvas.clear();
+				layers.getActive().select2Canvas.clear();
+				layers.shape.polygonStart = false;
+				layers.shape.lineStart = false;
+				layers.activate({layer}).refreshController().refreshEasel();
+			});
+			previewElement.addEventListener("pointerup", (e) => {
+				e.stopPropagation();
+			});
+			previewElement.addEventListener("pointermove", (e) => {
+				e.stopPropagation();
+			});
 
 			previewElement.addEventListener("pointerenter", () => {
 				layers.infoTipElement.innerHTML = 'Select layer.';
@@ -705,9 +778,14 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		const zoomInput = document.createElement("input");
 		zoomInput.classList.add("zoom-input");
 		zoomInput.type = "number";
+		zoomInput.min = "0.1"; // Prevents reaching 0
+		zoomInput.max = "20";
+		zoomInput.step = "0.1"; // Allows zoom out but in reasonable steps
 		zoomInput.value = layers.zoomScale;
 		zoomInput.addEventListener("change", () => {
-			layers.zoom({scale: parseInt(zoomInput.value)}).refresh();
+			let newZoom = Math.max(0.1, Math.min(20, parseFloat(zoomInput.value)));
+			zoomInput.value = newZoom;
+			layers.zoom({ scale: newZoom }).refresh();
 		});
 
 		zoomInputWrapper.addEventListener("pointerenter", () => {
@@ -748,8 +826,6 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		return x >= 0 && x < layers.width && y >= 0 && y < layers.height;
 	} // }}}
 
-
-
 	// init
 	
 	layers.destruct = function() { // {{{
@@ -759,7 +835,6 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	}; // }}}
 
 	layers.reset = function() { // {{{
-		layers.backgroundColor = backgroundColor;
 		layers.height = height;
 		layers.width = width;
 		layers.easelElement = easelElement;
@@ -772,9 +847,8 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		layers.activeIndex = 1;
 		layers.clear();
 		layers.zoom({scale: 1});
-		layers.push(makeLayer({height: layers.height, width: layers.width}));
-		// layers.push(makeLayer({height: layers.height, width: layers.width}).fill({color: layers.backgroundColor}));
-		layers.push(makeLayer({height: layers.height, width: layers.width}));
+		layers.push(makeLayer({height: layers.height, width: layers.width, zoom: layers.zoomScale}));
+		// layers.push(makeLayer({height: layers.height, width: layers.width}));
 
 		return layers;
 	} // }}}

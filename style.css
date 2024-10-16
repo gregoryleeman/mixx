@@ -170,6 +170,24 @@ canvas {
 	background-color: var(--grey);
 }
 
+.button:hover > .sub-icon,
+.button.active > .sub-icon {
+	filter:
+		drop-shadow(2px 0 0 var(--grey))
+		drop-shadow(-2px 0 0 var(--grey))
+		drop-shadow(0 2px 0 var(--grey))
+        drop-shadow(0 -2px 0 var(--grey));
+}
+
+.button:hover > .key-hint,
+.button.active > .key-hint {
+	text-shadow:
+		1px 1px 0 var(--grey),
+		-1px 1px 0 var(--grey),
+		-1px -1px 0 var(--grey),
+		1px -1px 0 var(--grey);
+}
+
 .button.active, .button:active {
 	background-color: var(--grey);
 	border-bottom: 2px solid var(--lightergrey);
@@ -200,11 +218,17 @@ canvas {
 
 .sub-icon {
 	position: absolute;
+	border-radius: 5px;
 	width: 12px !important;
 	height: 12px !important;
 	color: white;
 	bottom: 2px;
 	right: 2px;
+	filter:
+		drop-shadow(2px 0 0 var(--lightgrey))
+		drop-shadow(-2px 0 0 var(--lightgrey))
+		drop-shadow(0 2px 0 var(--lightgrey))
+        drop-shadow(0 -2px 0 var(--lightgrey));
 }
 
 .key-hint, .quick-key-hint {
@@ -213,12 +237,19 @@ canvas {
 	line-height: 12px;
 	top: 0;
 	left: 2px;
-	color: var(--white);
+	/* color: var(--white); */
+	color: var(--black);
 	text-shadow:
-		1px 1px 0 #000,
-		-1px 1px 0 #000,
-		-1px -1px 0 #000,
-		1px -1px 0 #000;
+		1px 1px 0 var(--lightgrey),
+		-1px 1px 0 var(--lightgrey),
+		-1px -1px 0 var(--lightgrey),
+		1px -1px 0 var(--lightgrey);
+
+	/* text-shadow: */
+	/* 	1px 1px 0 #000, */
+	/* 	-1px 1px 0 #000, */
+	/* 	-1px -1px 0 #000, */
+	/* 	1px -1px 0 #000; */
 	pointer-events: none;
 }
 
@@ -276,14 +307,14 @@ canvas {
 }
 
 .layer:first-child {
-	display: none !important;
-}
-
-.layer:nth-child(1) {
 	border-bottom: 1px solid var(--black);
 }
 
-.layer:not(:first-child):hover > .layer-preview {
+/* .layer:nth-child(1) { */
+/* 	border-bottom: 1px solid var(--black); */
+/* } */
+
+.layer:hover > .layer-preview {
 	border-color: var(--darkergrey);
 }
 
@@ -340,7 +371,7 @@ canvas {
 }
 
 .zoom-input {
-	width: 46px;
+	width: 64px;
 }
 
 .size-input::-webkit-inner-spin-button,

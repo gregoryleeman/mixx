@@ -10,8 +10,14 @@ function makeBrush({sizeControllerElement, infoTipElement}) {
 		sizeInput.classList.add("brush-size-input");
 		sizeInput.type = "number";
 		sizeInput.value = brush.size;
+		sizeInput.min = 1;
+		sizeInput.max = 150;
+		sizeInput.step = 1;
 		sizeInput.addEventListener("change", () => {
-			brush.changeSize({size: sizeInput.value});
+			let newSize = Math.max(1, Math.min(150, parseInt(sizeInput.value, 10))); // Clamp value between 1 and 150
+			sizeInput.value = newSize; // Update the input field to the clamped value
+			brush.changeSize({size: newSize});
+			// brush.changeSize({size: sizeInput.value});
 		});
 
 		sizeInputWrapper.addEventListener("pointerenter", () => {
@@ -28,6 +34,12 @@ function makeBrush({sizeControllerElement, infoTipElement}) {
 	} // }}}
 
 	brush.changeSize = function({size}) {
+		if (size <= 1) {
+			size = 1;
+		}
+		if (size >= 150) {
+			size = 150;
+		}
 		brush.size = size;
 	}
 

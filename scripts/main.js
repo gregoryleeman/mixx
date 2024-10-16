@@ -20,7 +20,6 @@ const layerCommandsElement = document.getElementById('layer-commands');
 const colorsElement = document.getElementById('colors');
 
 const dBrushSize = 2;
-const dOpacity = 0.001;
 const initialWidth = 800;
 const initialHeight = 600;
 const maxBrushSize = 500;
@@ -170,8 +169,9 @@ const commands = makeCommands({
 
 commands.add({ // save {{{
 	name: 'Save',
-	info: 'Save as a JSON file.',
-	iconPath: 'icons/solid/floppy-disk.svg',
+	info: 'Save file.',
+	iconPath: 'icons/remix/file-line.svg',
+	subIconPath: 'icons/remix/save-2-fill.svg',
 	func: () => {
 		layers.exportBlob();
 	}
@@ -179,26 +179,50 @@ commands.add({ // save {{{
 
 commands.add({ // open {{{
 	name: 'Open',
-	info: 'Open a JSON file.',
-	iconPath: 'icons/regular/folder-open.svg',
+	info: 'Open file.',
+	iconPath: 'icons/remix/file-line.svg',
+	subIconPath: 'icons/remix/folder-open-fill.svg',
 	func: () => {
-		layers.importBlob();
+		layers.importBlob({add: false});
 	}
 }); // }}}
 
+commands.add({ // import {{{
+	name: 'Import',
+	info: 'Import a file.',
+	iconPath: 'icons/remix/file-line.svg',
+	subIconPath: 'icons/remix/add-fill.svg',
+	func: () => {
+		layers.importBlob({add: true});
+	}
+}); // }}}
+
+
 commands.add({ // export png {{{
-	name: 'Export PNG',
-	info: 'Export as a PNG image.',
-	iconPath: 'icons/solid/file-image.svg',
+	name: 'Save as PNG',
+	info: 'Export as a PNG file',
+	iconPath: 'icons/remix/file-image-line.svg',
+	subIconPath: 'icons/remix/save-2-fill.svg',
 	func: () => {
 		layers.exportPng();
 	}
 }); // }}}
 
+commands.add({ // import image {{{
+	name: 'Import Image',
+	info: 'Import an image.',
+	iconPath: 'icons/remix/file-image-line.svg',
+	subIconPath: 'icons/remix/add-fill.svg',
+	func: () => {
+		layers.importImage({add: true});
+	}
+}); // }}}
+
+
 commands.add({ // reset {{{
 	name: 'Reset',
 	info: 'Reset the entire project.',
-	iconPath: 'icons/regular/trash-can.svg',
+	iconPath: 'icons/remix/delete-bin-line.svg',
 	func: () => {
 		layers.reset().save().updateActive().refresh();
 	}
@@ -207,7 +231,7 @@ commands.add({ // reset {{{
 commands.add({ // home {{{
 	name: 'Home',
 	info: 'Return the easel to the home position.',
-	iconPath: 'icons/solid/house.svg',
+	iconPath: 'icons/remix/home-2-line.svg',
 	func: () => {
 		layers.zoom({scale: 1}).refresh();
 		home();
@@ -218,7 +242,7 @@ commands.add({ // undo {{{
 	name: 'Undo',
 	info: 'Undo the last action.',
 	key: 'z',
-	iconPath: 'icons/solid/rotate-left.svg',
+	iconPath: 'icons/remix/arrow-go-back-fill.svg',
 	func: () => {
 		layers.undo().updateActive().refresh();
 	}
@@ -228,33 +252,16 @@ commands.add({ // redo {{{
 	name: 'Redo',
 	info: 'Redo the last action.',
 	key: 'y',
-	iconPath: 'icons/solid/rotate-right.svg',
+	iconPath: 'icons/remix/arrow-go-forward-fill.svg',
 	func: () => {
 		layers.redo().updateActive().refresh();
 	}
 }); // }}}
 
-// commands.add({ // change shape {{{
-// 	name: 'Change Shape',
-// 	info: 'Change the shape tool.',
-// 	iconPath: 'icons/solid/shapes.svg',
-// 	func: () => {
-// 		const currentShape = tools.getByClass({toolClass: 'shape'});
-// 		const shapeIndex = shapes.findIndex(shape => shape.name === currentShape.name);
-// 		const nextShapeIndex = (shapeIndex + 1) % shapes.length;
-// 		const nextShape = shapes[nextShapeIndex];
-
-// 		tools.replace({toolClass: 'shape', tool: nextShape.shape});
-// 		tools.replace({toolClass: 'erase', tool: nextShape.erase});
-// 		tools.replace({toolClass: 'extract', tool: nextShape.extract});
-// 		tools.refreshController();
-// 	}
-// }); // }}}
-
 commands.add({ // flip all vertical {{{
 	name: 'Flip All Vertical',
 	info: 'Flip all layers vertically.',
-	iconPath: 'icons/solid/up-down.svg',
+	iconPath: 'icons/remix/flip-vertical-line.svg',
 	func: () => {
 		layers.flipAllVertical();
 		layers.save().refresh();
@@ -264,16 +271,46 @@ commands.add({ // flip all vertical {{{
 commands.add({ // flip all horizontal {{{
 	name: 'Flip All Horizontal',
 	info: 'Flip all layers horizontally.',
-	iconPath: 'icons/solid/left-right.svg',
+	iconPath: 'icons/remix/flip-horizontal-line.svg',
 	func: () => {
 		layers.flipAllHorizontal();
 		layers.save().refresh();
 	}
 }); // }}}
 
+commands.add({ // size 1 brush {{{
+	name: 'Size 1',
+	info: 'Set the brush size to 1.',
+	iconPath: 'icons/remix/circle-small-fill.svg',
+	func: () => {
+		brush.changeSize({size: 1});
+		brush.refresh();
+	}
+}); // }}}
 
+commands.add({ // size 5 brush {{{
+	name: 'Size 5',
+	info: 'Set the brush size to 5.',
+	iconPath: 'icons/remix/circle-medium-fill.svg',
+	func: () => {
+		brush.changeSize({size: 5});
+		brush.refresh();
+	}
+}); // }}}
+
+commands.add({ // size 10 brush {{{
+	name: 'Size 10',
+	info: 'Set the brush size to 10.',
+	iconPath: 'icons/remix/circle-fill.svg',
+	func: () => {
+		brush.changeSize({size: 10});
+		brush.refresh();
+	}
+}); // }}}
 
 commands.refresh();
+
+// }}}
 
 // }}}
 
@@ -287,7 +324,7 @@ const options = makeOptions({
 options.add({ // pressure sensitive {{{
 	name: 'pressure',
 	info: 'Use pen pressure to control brush size.',
-	iconPath: 'icons/solid/pen-nib.svg',
+	iconPath: 'icons/remix/pen-nib-fill.svg',
 	defaultValue : false
 }); // }}}
 
@@ -307,7 +344,7 @@ tools.push(makeTool({ // pen {{{
 	name: 'Pen',
 	info: 'Pen tool.',
 	key: 'p',
-	iconPath: 'icons/solid/pen.svg',
+	iconPath: 'icons/remix/ball-pen-fill.svg',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -364,8 +401,8 @@ tools.push(makeTool({ // pen eraser {{{
 	name: 'Pen eraser',
 	info: 'Pen eraser tool.',
 	key: 'e',
-	iconPath: 'icons/solid/pen.svg',
-	subIconPath: 'icons/solid/eraser.svg',
+	iconPath: 'icons/remix/ball-pen-line.svg',
+	subIconPath: 'icons/remix/eraser-line.svg',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -423,7 +460,7 @@ tools.push(makeTool({ // pen eraser {{{
 tools.push(makeTool({ // brush {{{
 	name: 'Brush',
 	info: 'Brush tool.',
-	iconPath: 'icons/solid/brush.svg',
+	iconPath: 'icons/remix/brush-2-fill.svg',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -488,8 +525,8 @@ tools.push(makeTool({ // brush {{{
 tools.push(makeTool({ // brush eraser {{{
 	name: 'Brush eraser',
 	info: 'Brush eraser tool.',
-	iconPath: 'icons/solid/brush.svg',
-	subIconPath: 'icons/solid/eraser.svg',
+	iconPath: 'icons/remix/brush-2-line.svg',
+	subIconPath: 'icons/remix/eraser-line.svg',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -553,9 +590,9 @@ tools.push(makeTool({ // brush eraser {{{
 
 tools.push(makeTool({ // brush-size {{{
 	name: 'Point size',
-	info: 'Change the size of the pen/brush.',
+	info: 'Brush size tool. Drag to change the size of the brush.',
 	key: 's',
-	iconPath: 'icons/regular/circle-dot.svg',
+	iconPath: 'icons/remix/focus-2-line.svg',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -586,10 +623,10 @@ tools.push(makeTool({ // brush-size {{{
 
 tools.push(makeTool({ // color-picker {{{
     name: 'Color Picker',
-    info: 'Select a color from the canvas.',
+    info: 'Color picker tool. Click to pick a color from the canvas.',
     key: 'p',
 	quickKey: 'i',
-    iconPath: 'icons/solid/eye-dropper.svg',
+    iconPath: 'icons/remix/dropper-fill.svg',
     mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -629,10 +666,10 @@ tools.push(makeTool({ // color-picker {{{
 
 tools.push(makeTool({ // color-mix {{{
 	name: 'color-mix',
-	info: 'Mix the current brush color with the color on the canvas (click and hold).',
+	info: 'Color mixxing tool. Click and hold to mix the current brush color with the color on the canvas.',
 	key: 'x',
 	quickKey: 'v',
-	iconPath: 'icons/solid/mortar-pestle.svg',
+	iconPath: 'icons/remix/palette-line.svg',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -677,9 +714,9 @@ tools.push(makeTool({ // color-mix {{{
 
 tools.push(makeTool({ // bucket {{{
 	name: 'Bucket',
-	info: 'Flood-fill an area.',
+	info: 'Bucket tool. Click to flood-fill an area.',
 	key: 'k',
-	iconPath: 'icons/solid/fill.svg',
+	iconPath: 'icons/remix/paint-fill.svg',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -711,9 +748,9 @@ tools.push(makeTool({ // bucket {{{
 
 tools.push(makeTool({ // move {{{
 	name: 'Move',
-	info: 'Move the easel.',
+	info: 'Move tool. Click and drag to move the easel.',
 	key: 'm',
-	iconPath: 'icons/solid/arrows-up-down-left-right.svg',
+	iconPath: 'icons/remix/drag-move-2-fill.svg',
 	mouseDown: (e) => {
 		startX = e.clientX - easelElement.offsetLeft;
 		startY = e.clientY - easelElement.offsetTop;
@@ -726,9 +763,9 @@ tools.push(makeTool({ // move {{{
 
 tools.push(makeTool({ // hand {{{
 	name: 'Hand',
-	info: 'Move the content of the active canvas.',
+	info: 'Hand tool. Click and drag to move the content of the active canvas.',
 	key: 'h',
-	iconPath: 'icons/regular/hand.svg',
+	iconPath: 'icons/remix/hand.svg',
 	mouseDown: (e) => {
 		layers.getActive()
 			.drawCanvas
@@ -747,9 +784,9 @@ tools.push(makeTool({ // hand {{{
 
 tools.push(makeTool({ // line {{{
 	name: 'Line',
-	info: 'Draw a line.',
-	iconPath: 'icons/solid/minus.svg',
-	mouseMove: (e) => {
+	info: 'Line tool. Click and drag to draw a line line.',
+	iconPath: 'icons/remix/ruler-line.svg',
+	mouseDrag: (e) => {
 		layers.getActive()
 			.cursorCanvas
 			.clear()
@@ -786,22 +823,24 @@ tools.push(makeTool({ // line {{{
 		// 	});
 		// 	shape.lineStart = false;
 		// }
+		shape.lineStart = true;
+		shape.lineStartX = canvasEndX;
+		shape.lineStartY = canvasEndY;
 	},
-	mouseDrag: (e) => {
-		// layers.getActive()
-		// 	.tempCanvas
-		// 	.clear()
-		// 	.drawLineWithPixels({
-		// 		x1: canvasStartX,
-		// 		y1: canvasStartY,
-		// 		x2: canvasEndX,
-		// 		y2: canvasEndY,
-		// 		color: brushColor
-		// 	});
-	},
+	// mouseDrag: (e) => {
+	// 	// layers.getActive()
+	// 	// 	.tempCanvas
+	// 	// 	.clear()
+	// 	// 	.drawLineWithPixels({
+	// 	// 		x1: canvasStartX,
+	// 	// 		y1: canvasStartY,
+	// 	// 		x2: canvasEndX,
+	// 	// 		y2: canvasEndY,
+	// 	// 		color: brushColor
+	// 	// 	});
+	// },
 	mouseUp: (e) => {
 		if (shape.lineStart) {
-			console.log("test");
 			layers.getActive()
 				.drawCanvas
 				.drawLineWithCircles({
@@ -815,46 +854,45 @@ tools.push(makeTool({ // line {{{
 			layers.getActive().tempCanvas.clear();
 			layers.refreshPreviews().save();
 			shape.lineStart = false;
-		} else {
-			shape.lineStart = true;
-			shape.lineStartX = canvasEndX;
-			shape.lineStartY = canvasEndY;
-		}
+		} 
 	},
-	// mouseLeave: (e) => {
-	// 	layers.getActive().cursorCanvas.clear();
-	// }
-})); // }}}
-
-tools.push(makeTool({ // distort {{{
-	name: 'Distort',
-	info: 'Squeeze and stretch the content of the active layer.',
-	iconPath: 'icons/solid/down-left-and-up-right-to-center.svg',
-	mouseDown: (e) => {
-		layers.getActive()
-			.drawCanvas
-			.save();
-	},
-	mouseDrag: (e) => {
-		let newWidth = layers.width - dX;
-		let newHeight = layers.height - dY;
-		layers.getActive().drawCanvas.distort({height: newHeight, width: newWidth, anchorX: canvasStartX, anchorY: canvasStartY});
-		// startX = endX;
-		// startY = endY;
-	},
-	mouseUp: (e) => {
-		layers.save().refreshPreviews();
+	mouseLeave: (e) => {
+		layers.getActive().cursorCanvas.clear();
+		shape.lineStart = false;
 	}
 })); // }}}
 
+// tools.push(makeTool({ // distort {{{
+// 	name: 'Distort',
+// 	info: 'Squeeze and stretch the content of the active layer.',
+// 	iconPath: 'icons/solid/down-left-and-up-right-to-center.svg',
+// 	mouseDown: (e) => {
+// 		layers.getActive()
+// 			.drawCanvas
+// 			.save();
+// 	},
+// 	mouseDrag: (e) => {
+// 		let newWidth = layers.width - dX;
+// 		let newHeight = layers.height - dY;
+// 		layers.getActive().drawCanvas.distort({height: newHeight, width: newWidth, anchorX: canvasStartX, anchorY: canvasStartY});
+// 		// startX = endX;
+// 		// startY = endY;
+// 	},
+// 	mouseUp: (e) => {
+// 		layers.save().refreshPreviews();
+// 	}
+// })); // }}}
+
 tools.push(makeTool({ // resize {{{
 	name: 'Resize',
-	info: 'Resize the easel.',
-	iconPath: 'icons/solid/ruler-combined.svg',
+	info: 'Resize tool. Click and drag to resize the easel.',
+	iconPath: 'icons/remix/crop-line.svg',
 	mouseDrag: (e) => {
-		let newWidth = layers.width + Math.round(dX);
-		let newHeight = layers.height + Math.round(dY);
-		layers.resize({height: newHeight, width: newWidth, save: false}).refreshSizeController();
+		// let newWidth = layers.width + Math.round(dX * layers.zoomScale);
+		// let newHeight = layers.height + Math.round(dY * layers.zoomScale);
+		let newWidth = layers.width + Math.round(dX / layers.zoomScale);
+		let newHeight = layers.height + Math.round(dY / layers.zoomScale);
+		layers.resize({height: newHeight, width: newWidth}).refreshSizeController();
 		startX = endX;
 		startY = endY;
 	},
@@ -865,313 +903,39 @@ tools.push(makeTool({ // resize {{{
 
 tools.push(makeTool({ // zoom {{{
 	name: 'Zoom',
-	info: 'Zoom in on the easel.',
-	iconPath: 'icons/solid/magnifying-glass.svg',
+	info: 'Zoom tool. Click and drag to zoom in and out.',
+	iconPath: 'icons/remix/zoom-in-line.svg',
 	mouseDown: (e) => {
 		tempScale = layers.zoomScale;
 	},
 	mouseDrag: (e) => {
-		tempScale = tempScale + dX / 100;
-		var scale = Math.floor(tempScale);
-		if (scale !== layers.zoomScale) {
-			layers.zoom({scale}).refreshZoomController();
+		let distance = Math.sqrt(dX * dX + dY * dY);
+		if (dX < 0) {
+			distance = -distance
+		}
+		tempScale = tempScale + distance / 1000;
+		let newScale = Math.round(tempScale * 10) / 10;
+		if (newScale < 0.1) {
+			newScale = 0.1;
+		}
+		if (newScale > 20) {
+			newScale = 20;
+		}
+		if (layers.zoomScale !== newScale) {
+			layers.zoom({scale: newScale}).refreshZoomController();
 		}
 		startX = endX;
+		startY = endY;
 	},
 	mouseUp: (e) => {
-		tempScale = layers.zoomScale;
 		layers.save().refreshPreviews();
 	}
 })); // }}}
 
-/*
-tools.push(makeTool({ // polygon {{{
-	name: 'Polygon',
-	info: 'Draw a polygon (double click to complete).',
-	iconPath: 'icons/solid/star.svg',
-	mouseMove: (e) => {
-		layers.getActive()
-			.cursorCanvas
-			.clear()
-			.drawCrossHairs({
-				x: canvasEndX,
-				y: canvasEndY,
-				color: white
-			});
-		if (shape.lineStart) {
-			layers.getActive().tempCanvas.clear().drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: canvasEndX,
-				y2: canvasEndY,
-				color: brushColor
-			});
-		}
-	},
-	mouseDrag: (e) => {
-		layers.getActive().tempCanvas.clear().drawLineWithPixels({
-			x1: shape.lineStartX,
-			y1: shape.lineStartY,
-			x2: canvasEndX,
-			y2: canvasEndY,
-			color: brushColor
-		});
-	},
-	mouseDown: (e) => {
-		if (!shape.polygonStart) {
-			if (layers.inBounds({x: canvasEndX, y: canvasEndY})) {
-				shape.polygonStart = true;
-				shape.polygonStartX = canvasEndX;
-				shape.polygonStartY = canvasEndY;
-			}
-		}
-		if (shape.lineStart) {
-			layers.getActive().temp2Canvas.drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: canvasStartX,
-				y2: canvasStartY,
-				color: brushColor
-			});
-		}
-		if (shape.polygonStart) {
-			shape.lineStart = true;
-			shape.lineStartX = canvasEndX;
-			shape.lineStartY = canvasEndY;
-		}
-	},
-	mouseUp: (e) => {
-		if (shape.lineStart) {
-			layers.getActive().temp2Canvas.drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: canvasEndX,
-				y2: canvasEndY,
-				color: brushColor
-			});
-		}
-		if (layers.inBounds({x: canvasEndX, y: canvasEndY})) {
-			shape.lineStart = true;
-			shape.lineStartX = canvasEndX;
-			shape.lineStartY = canvasEndY;
-		}	
-	},
-	mouseDoubleClick: (e) => {
-		if (shape.polygonStart) {
-			layers.getActive().temp2Canvas.drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: shape.polygonStartX,
-				y2: shape.polygonStartY,
-				color: brushColor
-			});
-			const mask = layers.getActive().temp2Canvas.pathFill({path: layers.getActive().temp2Canvas._path});
-			layers.getActive().drawCanvas.fill({maskData: mask, color: brushColor});
-			layers.getActive().temp2Canvas.clear();
-			layers.getActive().temp2Canvas._path = [];
-			layers.getActive().temp2Canvas._pathComplete = false;
-			layers.refreshPreviews().save();
-		}
-		shape.polygonStart = false;
-		shape.lineStart = false;
-	}
-})); // }}}
-tools.push(makeTool({ // erase polygon {{{
-	name: 'Erase Polygon',
-	info: 'Erase a polygon (double click to complete).',
-	iconPath: 'icons/regular/star.svg',
-	subIconPath: 'icons/solid/eraser.svg',
-	mouseMove: (e) => {
-		layers.getActive()
-			.cursorCanvas
-			.clear()
-			.drawCrossHairs({
-				x: canvasEndX,
-				y: canvasEndY,
-				color: white
-			});
-		if (shape.lineStart) {
-			layers.getActive().selectCanvas.clear().drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: canvasEndX,
-				y2: canvasEndY,
-				color: white
-			});
-		}
-	},
-	mouseDrag: (e) => {
-		layers.getActive().selectCanvas.clear().drawLineWithPixels({
-			x1: shape.lineStartX,
-			y1: shape.lineStartY,
-			x2: canvasEndX,
-			y2: canvasEndY,
-			color: white
-		});
-	},
-	mouseDown: (e) => {
-		if (!shape.polygonStart) {
-			if (layers.inBounds({x: canvasEndX, y: canvasEndY})) {
-				shape.polygonStart = true;
-				shape.polygonStartX = canvasEndX;
-				shape.polygonStartY = canvasEndY;
-			}
-		}
-		if (shape.lineStart) {
-			layers.getActive().select2Canvas.drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: canvasStartX,
-				y2: canvasStartY,
-				color: white
-			});
-		}
-		if (shape.polygonStart) {
-			shape.lineStart = true;
-			shape.lineStartX = canvasEndX;
-			shape.lineStartY = canvasEndY;
-		}
-	},
-	mouseUp: (e) => {
-		if (shape.lineStart) {
-			layers.getActive().select2Canvas.drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: canvasEndX,
-				y2: canvasEndY,
-				color: brushColor
-			});
-		}
-		if (layers.inBounds({x: canvasEndX, y: canvasEndY})) {
-			shape.lineStart = true;
-			shape.lineStartX = canvasEndX;
-			shape.lineStartY = canvasEndY;
-		}
-	},
-	mouseDoubleClick: (e) => {
-		if (shape.polygonStart) {
-			layers.getActive().select2Canvas.drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: shape.polygonStartX,
-				y2: shape.polygonStartY,
-				color: brushColor
-			});
-			const mask = layers.getActive().select2Canvas.pathFill({path: layers.getActive().select2Canvas._path});
-			layers.getActive().drawCanvas.fill({maskData: mask, erase: true});
-			layers.getActive().selectCanvas.clear();
-			layers.getActive().select2Canvas.clear();
-			layers.getActive().select2Canvas._path = [];
-			layers.getActive().select2Canvas._pathComplete = false;
-			layers.refreshPreviews().save();
-		}
-		shape.polygonStart = false;
-		shape.lineStart = false;
-	}
-})); // }}}
-tools.push(makeTool({ // extract polygon {{{
-	name: 'Extract Polygon',
-	info: 'Extract a polygon. (double click to complete)',
-	iconPath: 'icons/regular/star.svg',
-	subIconPath: 'icons/solid/scissors.svg',
-	mouseMove: (e) => {
-		layers.getActive()
-			.cursorCanvas
-			.clear()
-			.drawCrossHairs({
-				x: canvasEndX,
-				y: canvasEndY,
-				color: white
-			});
-		if (shape.lineStart) {
-			layers.getActive().selectCanvas.clear().drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: canvasEndX,
-				y2: canvasEndY,
-				color: white
-			});
-		}
-	},
-	mouseDrag: (e) => {
-		layers.getActive().selectCanvas.clear().drawLineWithPixels({
-			x1: shape.lineStartX,
-			y1: shape.lineStartY,
-			x2: canvasEndX,
-			y2: canvasEndY,
-			color: white
-		});
-	},
-	mouseDown: (e) => {
-		if (!shape.polygonStart) {
-			if (layers.inBounds({x: canvasEndX, y: canvasEndY})) {
-				shape.polygonStart = true;
-				shape.polygonStartX = canvasEndX;
-				shape.polygonStartY = canvasEndY;
-			}
-		}
-		if (shape.lineStart) {
-			layers.getActive().select2Canvas.drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: canvasStartX,
-				y2: canvasStartY,
-				color: white
-			});
-		}
-		if (shape.polygonStart) {
-			shape.lineStart = true;
-			shape.lineStartX = canvasEndX;
-			shape.lineStartY = canvasEndY;
-		}
-	},
-	mouseUp: (e) => {
-		if (shape.lineStart) {
-			layers.getActive().select2Canvas.drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: canvasEndX,
-				y2: canvasEndY,
-				color: brushColor
-			});
-		}
-		if (layers.inBounds({x: canvasEndX, y: canvasEndY})) {
-			shape.lineStart = true;
-			shape.lineStartX = canvasEndX;
-			shape.lineStartY = canvasEndY;
-		}
-	},
-	mouseDoubleClick: (e) => {
-		if (shape.polygonStart) {
-			layers.getActive().select2Canvas.drawLineWithPixels({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: shape.polygonStartX,
-				y2: shape.polygonStartY,
-				color: brushColor
-			});
-			const mask = layers.getActive().select2Canvas.pathFill({path: layers.getActive().select2Canvas._path});
-			const lift = layers.getActive().drawCanvas.lift({maskData: mask});
-			layers.getActive().select2Canvas._path = [];
-			layers.getActive().select2Canvas._pathComplete = false;
-			layers.getActive().select2Canvas.clear();
-			layers.getActive().selectCanvas.clear();
-			layers.getActive().cursorCanvas.clear();
-			layers.add();
-			layers.getActive().drawCanvas.stamp({maskData: lift});
-			layers.save().refresh();
-			tools.activateByName({name: 'Hand'}).refresh();
-		}
-		shape.polygonStart = false;
-		shape.lineStart = false;
-	}
-})); // }}}
-*/
-
 tools.push(makeTool({ // rectangle {{{
 	name: 'Rectangle',
-	info: 'Draw a rectangle.',
-	iconPath: 'icons/solid/square-full.svg',
+	info: 'Rectangle tool. Click and drag to draw a rectangle.',
+	iconPath: 'icons/remix/rectangle-fill.svg',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -1217,9 +981,9 @@ tools.push(makeTool({ // rectangle {{{
 })); // }}}
 tools.push(makeTool({ // erase rectangle {{{
 	name: 'Erase Rectangle',
-	info: 'Erase a rectangle.',
-	iconPath: 'icons/regular/square-full.svg',
-	subIconPath: 'icons/solid/eraser.svg',
+	info: 'Erase rectangle tool. Click and drag to erase a.',
+	iconPath: 'icons/remix/rectangle-line.svg',
+	subIconPath: 'icons/remix/eraser-line.svg',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -1266,8 +1030,8 @@ tools.push(makeTool({ // erase rectangle {{{
 tools.push(makeTool({ // extract rectangle {{{
 	name: 'Extract Rectangle',
 	info: 'Extract a rectangle to a new layer.',
-	iconPath: 'icons/regular/square-full.svg',
-	subIconPath: 'icons/solid/scissors.svg',
+	iconPath: 'icons/remix/rectangle-line.svg',
+	subIconPath: 'icons/remix/scissors-fill.svg',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -1311,7 +1075,7 @@ tools.push(makeTool({ // extract rectangle {{{
 tools.push(makeTool({ // freeform {{{
 	name: 'Freeform',
 	info: 'Draw a freeform shape (double click to complete shape).',
-	iconPath: 'icons/solid/heart.svg',
+	iconPath: 'icons/remix/heart-fill.svg',
 	mouseMove: (e) => {
 
 		// cursor
@@ -1460,10 +1224,9 @@ tools.push(makeTool({ // freeform {{{
 tools.push(makeTool({ // erase freeform {{{
 	name: 'Freeform',
 	info: 'Erase a freeform shape (double click to complete shape).',
-	iconPath: 'icons/regular/heart.svg',
-	subIconPath: 'icons/solid/eraser.svg',
+	iconPath: 'icons/remix/heart-line.svg',
+	subIconPath: 'icons/remix/eraser-line.svg',
 	mouseMove: (e) => {
-
 		layers.getActive()
 			.cursorCanvas
 			.clear()
@@ -1593,8 +1356,8 @@ tools.push(makeTool({ // erase freeform {{{
 tools.push(makeTool({ // extract freeform {{{
 	name: 'Extract',
 	info: 'Extract a freeform shape to a new layer (double click to complete shape).',
-	iconPath: 'icons/regular/heart.svg',
-	subIconPath: 'icons/solid/scissors.svg',
+	iconPath: 'icons/remix/heart-line.svg',
+	subIconPath: 'icons/remix/scissors-fill.svg',
 	mouseMove: (e) => {
 
 		layers.getActive()
@@ -1851,7 +1614,7 @@ const layerCommands = makeCommands({
 layerCommands.add({ // add layer {{{
 	name: 'Add Layer',
 	info: 'Add a new layer.',
-	iconPath: 'icons/solid/plus.svg',
+	iconPath: 'icons/remix/add-fill.svg',
 	func: () => {
 		layers.add().save().refreshController().refreshEasel();
 	}
@@ -1860,7 +1623,7 @@ layerCommands.add({ // add layer {{{
 layerCommands.add({ // move up {{{
 	name: 'Move Up',
 	info: 'Move the active layer up.',
-	iconPath: 'icons/solid/arrow-up.svg',
+	iconPath: 'icons/remix/arrow-up-line.svg',
 	func: () => {
 		layers.moveUp({index: layers.activeIndex}).save().refreshController().refreshEasel();
 	}
@@ -1869,7 +1632,7 @@ layerCommands.add({ // move up {{{
 layerCommands.add({ // move down {{{
 	name: 'Move Down',
 	info: 'Move the active layer down.',
-	iconPath: 'icons/solid/arrow-down.svg',
+	iconPath: 'icons/remix/arrow-down-line.svg',
 	func: () => {
 		layers.moveDown({index: layers.activeIndex}).save().refreshController().refreshEasel();
 	}
@@ -1878,7 +1641,7 @@ layerCommands.add({ // move down {{{
 layerCommands.add({ // merge down {{{
 	name: 'Merge Down',
 	info: 'Merge the active layer down.',
-	iconPath: 'icons/solid/angles-down.svg',
+	iconPath: 'icons/remix/arrow-down-double-line.svg',
 	func: () => {
 		layers.mergeDown({index: layers.activeIndex}).save().refreshController().refreshEasel().refreshPreviews();
 	}
@@ -1887,7 +1650,7 @@ layerCommands.add({ // merge down {{{
 layerCommands.add({ // duplicate layer {{{
 	name: 'Duplicate Layer',
 	info: 'Duplicate the active layer.',
-	iconPath: 'icons/solid/clone.svg',
+	iconPath: 'icons/remix/file-copy-line.svg',
 	func: () => {
 		layers.duplicate({index: layers.activeIndex}).save().refreshController().refreshEasel().refreshPreviews();
 	}
@@ -1896,17 +1659,16 @@ layerCommands.add({ // duplicate layer {{{
 layerCommands.add({ // delete layer {{{
 	name: 'Delete Layer',
 	info: 'Delete the active layer.',
-	iconPath: 'icons/solid/trash.svg',
+	iconPath: 'icons/remix/delete-bin-line.svg',
 	func: () => {
 		layers.remove({index: layers.activeIndex}).save().refreshController().refreshEasel();
 	}
 }); // }}}
 
-
 layerCommands.add({ // flip vertical {{{
 	name: 'Flip Vertical',
 	info: 'Flip the active layer vertically.',
-	iconPath: 'icons/solid/up-down.svg',
+	iconPath: 'icons/remix/flip-vertical-line.svg',
 	func: () => {
 		layers.getActive().flipVertical();
 		layers.save().refresh();
@@ -1916,7 +1678,7 @@ layerCommands.add({ // flip vertical {{{
 layerCommands.add({ // flip horizontal {{{
 	name: 'Flip Horizontal',
 	info: 'Flip the active layer horizontally.',
-	iconPath: 'icons/solid/left-right.svg',
+	iconPath: 'icons/remix/flip-horizontal-line.svg',
 	func: () => {
 		layers.getActive().flipHorizontal();
 		layers.save().refresh();
@@ -1927,7 +1689,7 @@ layerCommands.add({ // clear {{{
 	name: 'Clear',
 	info: 'Clear the active layer.',
 	key: 'c',
-	iconPath: 'icons/solid/broom.svg',
+	iconPath: 'icons/remix/sparkling-line.svg',
 	func: () => {
 		layers.getActive().drawCanvas.clear();
 		layers.save().refresh();
@@ -2214,27 +1976,6 @@ document.addEventListener('keyup', (e) => {
 });
 
 // }}}
-
-// infoElement = document.createElement('div');
-// infoElement.classList.add('button');
-// infoElement.classList.add('command-button');
-// infoElement.classList.add('info-button');
-// infoElement.innerHTML = `<img src="icons/solid/info.svg" alt="info" draggable="false">`;
-// infoElement.addEventListener('click', (e) => {
-// 	window.open('https://github.com/gregoryleeman/mixx', '_blank');
-// });
-
-// infoElement.addEventListener('mouseenter', (e) => {
-// 	infoTipElement.innerHTML = 'Documentation.';
-// });
-
-// infoElement.addEventListener('mouseleave', (e) => {
-// 	infoTipElement.innerHTML = 'mixx.';
-// });
-
-// topBarElement.appendChild(infoElement);
-
-// versionElement.innerHTML = `v${version}`;
 
 home();
 tools.activateByName({name: 'Pen'}).refresh();

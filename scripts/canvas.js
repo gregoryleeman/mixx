@@ -52,24 +52,34 @@ function makeCanvas({height, width}) {
 		});
 	} // }}}
 
+	canvas.fromImage = function({image}) { // {{{
+		canvas.width = image.width;
+		canvas.height = image.height;
+		canvas.style.width = `${image.width}px`;
+		canvas.style.height = `${image.height}px`;
+		canvas.ctx.drawImage(image, 0, 0);
+		disableImageSmoothing({ctx: canvas.ctx});
+		return canvas;
+	} // }}}
+
 	canvas.toDataUrl = function() { // {{{
 		return canvas.toDataURL();
 	}; // }}}
 
-	canvas.resize = function({height, width}) { // {{{
+	canvas.resize = function({height, width, scale=1}) { // {{{
 		canvas.save();
 		canvas.clear();
 		canvas.height = height;
 		canvas.width = width;
-		canvas.style.height = `${height}px`;
-		canvas.style.width = `${width}px`;
+		canvas.style.height = `${height * canvas.zoomScale}px`;
+		canvas.style.width = `${width * canvas.zoomScale}px`;
 		disableImageSmoothing({ctx: canvas.ctx});
 		canvas.restore();
 
 		canvas.temp.height = height;
 		canvas.temp.width = width;
-		canvas.temp.style.height = `${height}px`;
-		canvas.temp.style.width = `${width}px`;
+		canvas.temp.style.height = `${height * canvas.zoomScale}px`;
+		canvas.temp.style.width = `${width * canvas.zoomScale}px`;
 		disableImageSmoothing({ctx: canvas.temp.ctx});
 
 		return canvas;
@@ -477,54 +487,45 @@ function makeCanvas({height, width}) {
 		return canvas;
 	}; // }}}
 
-	// canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
-	// 	if (diameter === 1) {
-	// 		canvas.drawLineWithPixels({x1, y1, x2, y2, color, erase});
-	// 		return canvas;
-	// 	}
-	// 	const dx = x2 - x1;
-	// 	const dy = y2 - y1;
-	// 	const distance = Math.sqrt(dx * dx + dy * dy);
-	// 	const steps = Math.ceil(distance / (diameter / 4));
-	// 	for (let i = 0; i <= steps; i++) {
-	// 		const x = Math.round(x1 + (dx * i) / steps);
-	// 		const y = Math.round(y1 + (dy * i) / steps);
-	// 		canvas.drawCircle({x, y, diameter, color, erase});
-	// 	}
-
-	// 	return canvas;
-	// }; // }}}
-
-canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) {
-    // Bresenham-like approach to manually draw the line with pixel-perfect control
-    const dx = Math.abs(x2 - x1);
-    const dy = Math.abs(y2 - y1);
-    const sx = x1 < x2 ? 1 : -1;
-    const sy = y1 < y2 ? 1 : -1;
-    let err = dx - dy;
-
-    while (true) {
-        // Draw a pixel-perfect circle at the current position
-        canvas.drawCircle({x: x1, y: y1, diameter, color, erase});
-
-        // Break when the line reaches the destination
-        if (x1 === x2 && y1 === y2) break;
-
-        const e2 = 2 * err;
-
-        if (e2 > -dy) {
-            err -= dy;
-            x1 += sx;
-        }
-
-        if (e2 < dx) {
-            err += dx;
-            y1 += sy;
-        }
-    }
-
-    return canvas;
-};
+	canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
+		if (diameter === 1) {
+			canvas.drawLineWithPixels({x1, y1, x2, y2, color, erase});
+			return canvas;
+		} else if (diameter <= 50) {
+			const dx = Math.abs(x2 - x1);
+			const dy = Math.abs(y2 - y1);
+			const sx = x1 < x2 ? 1 : -1;
+			const sy = y1 < y2 ? 1 : -1;
+			let err = dx - dy;
+			while (true) {
+				canvas.drawCircle({x: x1, y: y1, diameter, color, erase});
+				if (x1 === x2 && y1 === y2) break;
+				const e2 = 2 * err;
+				if (e2 > -dy) {
+					err -= dy;
+					x1 += sx;
+				}
+				if (e2 < dx) {
+					err += dx;
+					y1 += sy;
+				}
+			}
+			return canvas;
+		} else if (diameter <= 150) {
+			const dx = x2 - x1;
+			const dy = y2 - y1;
+			const distance = Math.sqrt(dx * dx + dy * dy);
+			const steps = Math.ceil(distance / (diameter / 4));
+			for (let i = 0; i <= steps; i++) {
+				const x = Math.round(x1 + (dx * i) / steps);
+				const y = Math.round(y1 + (dy * i) / steps);
+				canvas.drawCircle({x, y, diameter, color, erase});
+			}
+			return canvas;
+		} else {
+			console.error("The diameter is too large for this function");
+		}
+	}; // }}}
 
 	canvas.drawLineWithRotatedSquares = function({x1, y1, x2, y2, width, color=makeColor({r: 0, g: 0, b: 0, a: 255}), angle=0, erase=false}) { // {{{
 		if (width === 1) {
@@ -542,7 +543,6 @@ canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor
 		}
 		return canvas;
 	}; // }}}
-
 
 	canvas.drawCrossHairs = function({x, y, length=5, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 		canvas.drawRectCustom({x: x - length, y, width: length * 2 + 1, height: 1, color, erase});
@@ -609,8 +609,8 @@ canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor
 
 	canvas.zoom = function({scale}) { // {{{
 		canvas.zoomScale = scale;
-		canvas.style.width = `${canvas.width * scale}px`;
-		canvas.style.height = `${canvas.height * scale}px`;
+		canvas.style.width = `${canvas.width * canvas.zoomScale}px`;
+		canvas.style.height = `${canvas.height *canvas.zoomScale}px`;
 		return canvas;
 	} // }}}	
 
