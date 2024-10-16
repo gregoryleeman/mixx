@@ -1,12 +1,12 @@
-# ![Mixx Icon](icons/icon_32x32.png) mixx
+# ![mixx Icon](icons/icon_32x32.png) mixx
 
-A simple drawing application.
+**mixx** is a web app for virtual painting.
 
 ![Screenhot of mixx](docs/screenshot.png)
 
-*"Colors were made for mixxing, not for picking..."*
+*"Colors were made for mixxing, NOT 'picking'..."*
 
-Play with mixx right now on [mixx.studio](https://mixx.studio).
+Play with mixx right now on [mixx.studio](https://mixx.studio)!
 
 ### Attribution
 
