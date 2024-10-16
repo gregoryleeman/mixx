@@ -60,7 +60,6 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 	} // }}}
 
 	tools.activate = function({tool}) { // {{{
-		console.log(`activating ${tool.name}`);
 		if (tools.active) {
 			tools.previous = tools.active;
 		}

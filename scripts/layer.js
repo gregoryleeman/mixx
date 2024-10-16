@@ -92,26 +92,34 @@ function makeLayer({height=600, width=800, zoom=1}={}) {
 		layer.width = width;
 
 		layer.drawCanvas = makeCanvas({height, width});
+		layer.drawCanvas.classList.add('draw-canvas');
 
 		layer.tempCanvas = makeCanvas({height, width});
 		layer.tempCanvas.style.pointerEvents = 'none';
+		layer.tempCanvas.classList.add('temp-canvas');
+		layer.tempCanvas.style.zIndex = 3;
 
 		layer.temp2Canvas = makeCanvas({height, width});
 		layer.temp2Canvas.style.pointerEvents = 'none';
+		layer.temp2Canvas.classList.add('temp2-canvas');
+		layer.temp2Canvas.style.zIndex = 3;
 
 		layer.selectCanvas = makeCanvas({height, width});
 		layer.selectCanvas.style.pointerEvents = 'none';
 		layer.selectCanvas.style.mixBlendMode = 'difference';
+		layer.selectCanvas.classList.add('select-canvas');
 		layer.selectCanvas.style.zIndex = 4;
 
 		layer.select2Canvas = makeCanvas({height, width});
 		layer.select2Canvas.style.pointerEvents = 'none';
 		layer.select2Canvas.style.mixBlendMode = 'difference';
+		layer.select2Canvas.classList.add('select2-canvas');
 		layer.select2Canvas.style.zIndex = 4;
 
 		layer.cursorCanvas = makeCanvas({height, width});
 		layer.cursorCanvas.style.mixBlendMode = 'difference';
 		layer.cursorCanvas.style.pointerEvents = 'none';
+		layer.cursorCanvas.classList.add('cursor-canvas');
 		layer.cursorCanvas.style.zIndex = 5;
 
 		layer.zoom({scale: zoom});
@@ -664,6 +672,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		layers.easelElement.innerHTML = "";
 		layers.forEach(layer => {
 			layers.easelElement.appendChild(layer.drawCanvas);
+			layers.easelElement.appendChild(layer.tempCanvas);
 			layers.easelElement.appendChild(layer.temp2Canvas);
 			layers.easelElement.appendChild(layer.selectCanvas);
 			layers.easelElement.appendChild(layer.select2Canvas);

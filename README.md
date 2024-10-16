@@ -1,3 +1,5 @@
+[![pages-build-deployment](https://github.com/gregoryleeman/mixx/actions/workflows/pages/pages-build-deployment/badge.svg)](https://github.com/gregoryleeman/mixx/actions/workflows/pages/pages-build-deployment)
+
 # ![mixx Icon](icons/icon_32x32.png) mixx
 
 **mixx** is a web app for virtual painting.
@@ -6,7 +8,7 @@
 
 *"Colors were made for mixxing, NOT 'picking'..."*
 
-Play with mixx right now on [mixx.studio](https://mixx.studio)!
+Play with mixx right now on [mixx.studio](https://mixx.studio)
 
 ### Attribution
 

@@ -39,7 +39,6 @@ function makeCommands({controllerElement, infoTipElement}) {
 			button.classList.add('button');
 			button.classList.add('command-button');
 			button.innerHTML = `<i class="icon ri-${command.icon}"></i>`;
-			console.log(command.subIcon);
 			if (command.subIcon) {
 				button.innerHTML += `<i class="sub-icon ri-${command.subIcon}"></i>`;
 			}

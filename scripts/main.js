@@ -862,27 +862,6 @@ tools.push(makeTool({ // line {{{
 	}
 })); // }}}
 
-// tools.push(makeTool({ // distort {{{
-// 	name: 'Distort',
-// 	info: 'Squeeze and stretch the content of the active layer.',
-// 	icon: 'down-left-and-up-right-to-center',
-// 	mouseDown: (e) => {
-// 		layers.getActive()
-// 			.drawCanvas
-// 			.save();
-// 	},
-// 	mouseDrag: (e) => {
-// 		let newWidth = layers.width - dX;
-// 		let newHeight = layers.height - dY;
-// 		layers.getActive().drawCanvas.distort({height: newHeight, width: newWidth, anchorX: canvasStartX, anchorY: canvasStartY});
-// 		// startX = endX;
-// 		// startY = endY;
-// 	},
-// 	mouseUp: (e) => {
-// 		layers.save().refreshPreviews();
-// 	}
-// })); // }}}
-
 tools.push(makeTool({ // resize {{{
 	name: 'Resize',
 	info: 'Resize tool. Click and drag to resize the easel.',
@@ -1077,7 +1056,6 @@ tools.push(makeTool({ // freeform {{{
 	info: 'Freeform tool. Click and/or drag to draw a shape (double-click to complete the shape).',
 	icon: 'heart-fill',
 	mouseMove: (e) => {
-
 		// cursor
 		layers.getActive()
 			.cursorCanvas
@@ -1124,12 +1102,6 @@ tools.push(makeTool({ // freeform {{{
 
 		// if started a line, save line to tempCanvas
 		if (shape.lineStart) {
-			console.log({
-				x1: shape.lineStartX,
-				y1: shape.lineStartY,
-				x2: canvasStartX,
-				y2: canvasStartY
-			});
 			layers.getActive().tempCanvas.drawLineWithPixels({
 				x1: shape.lineStartX,
 				y1: shape.lineStartY,
@@ -1142,17 +1114,9 @@ tools.push(makeTool({ // freeform {{{
 		// make sure line isnt started
 		shape.lineStart = false;
 
-		// layers.getActive()
-		// 	.tempCanvas
-		// 	._path = [];
-		// layers.getActive()
-		// 	.tempCanvas
-		// 	._pathComplete = false;
-
 	},
 	mouseDrag: (e) => {
-
-		// draw to tempcanvas
+		console.log("test");
 		layers.getActive()
 			.tempCanvas
 			.drawLineWithPixels({
@@ -1166,7 +1130,6 @@ tools.push(makeTool({ // freeform {{{
 		startY = endY;
 		canvasStartX = canvasEndX;
 		canvasStartY = canvasEndY;
-
 	},
 	mouseUp: (e) => {
 
@@ -1191,7 +1154,6 @@ tools.push(makeTool({ // freeform {{{
 
 		// finish shape
 		if (shape.polygonStart) {
-			console.log({path: layers.getActive().tempCanvas._path});
 			layers.getActive().tempCanvas.drawLineWithPixels({
 				x1: shape.lineStartX,
 				y1: shape.lineStartY,
