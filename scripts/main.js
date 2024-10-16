@@ -380,7 +380,8 @@ tools.push(makeTool({ // pen {{{
 				x2: canvasEndX,
 				y2: canvasEndY,
 				diameter: options.value({name: 'pressure'}) ? brush.getSize({pressure}) : brush.size,
-				color: brushColor
+				color: brushColor,
+				smooth: true
 			});
 		startX = endX;
 		startY = endY;
