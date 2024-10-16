@@ -60,6 +60,10 @@ function makeLayer({height=600, width=800, zoom=1}={}) {
 		layer.select2Canvas.zoom({scale});
 	}; // }}}
 
+	layer.toggleHide = function() { // {{{
+		layer.hidden = !layer.hidden;
+	} // }}}
+
 	// init
 	
 	layer.destruct = function() { // {{{
@@ -112,6 +116,8 @@ function makeLayer({height=600, width=800, zoom=1}={}) {
 
 		layer.zoom({scale: zoom});
 
+		layer.hidden = false;
+
 		const previewElement = document.createElement("img");
 		previewElement.draggable = false;
 		previewElement.className = "layer-preview";
@@ -156,10 +162,10 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		layers.easelElement.style.height = `${state.height + 2}px`;
 		layers.easelElement.style.width = `${state.width + 2}px`;
 
+
 		const loadPromises = state.layersData.map(layerState => {
 			const layer = makeLayer({ height: layers.height, width: layers.width });
 			layers.push(layer);
-
 			return layer.drawCanvas.fromDataUrl({ dataUrl: layerState.drawCanvasData });
 		});
 
@@ -180,7 +186,6 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		const loadPromises = state.layersData.map(layerState => {
 			const layer = makeLayer({ height: height, width: width });
 			layers.push(layer);
-
 			return layer.drawCanvas.fromDataUrl({ dataUrl: layerState.drawCanvasData }).then((canvas) => {
 				canvas.resize({height, width});
 			});
@@ -289,7 +294,6 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 
 		return layers;
 	}; // }}}
-
 
 	// active layer
 
@@ -468,7 +472,9 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		mergedCanvas.classList.add('merged-canvas');
 
 		layers.forEach(layer => {
-			mergedCanvas.add({canvas2: layer.drawCanvas});
+			if (!layer.hidden) {
+				mergedCanvas.add({canvas2: layer.drawCanvas});
+			}
 		});
 
 		return mergedCanvas;
@@ -529,7 +535,7 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 			try {
 				// Open the file save dialog
 				const fileHandle = await window.showSaveFilePicker({
-					suggestedName: 'mixx.json',
+					suggestedName: 'project.mixx',
 					types: [{
 						description: 'JSON Files',
 						accept: { 'application/json': ['.json'] }
@@ -548,16 +554,12 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 				console.error("Error saving file:", error);
 			}
 		} else {
-			// Fallback for browsers that do not support the File System Access API
+			const fileName = prompt('Enter a name for the file:', 'project.mixx');
 			const link = document.createElement('a');
 			link.href = URL.createObjectURL(blob);
-			link.download = 'mixx.json'; // Default file name
-
-			// Trigger the download
+			link.download = fileName || 'project.mixx'; // Use the user-provided name or default if empty
 			document.body.appendChild(link);
 			link.click();
-
-			// Clean up
 			document.body.removeChild(link);
 			URL.revokeObjectURL(link.href);
 		}
@@ -662,11 +664,15 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 		layers.easelElement.innerHTML = "";
 		layers.forEach(layer => {
 			layers.easelElement.appendChild(layer.drawCanvas);
-			layers.easelElement.appendChild(layer.tempCanvas);
 			layers.easelElement.appendChild(layer.temp2Canvas);
 			layers.easelElement.appendChild(layer.selectCanvas);
 			layers.easelElement.appendChild(layer.select2Canvas);
 			layers.easelElement.appendChild(layer.cursorCanvas);
+			if (layer.hidden) {
+				layer.drawCanvas.style.display = 'none';
+			} else {
+				layer.drawCanvas.style.display = 'block';
+			}
 		});
 
 		return layers;
@@ -714,6 +720,12 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 				layers.toolTipElement.style.visibility = 'visible';
 				layersElement.classList.remove("hover");
 			});
+
+			if (layer.hidden) {
+				const hiddenElement = document.createElement("div");
+				hiddenElement.innerHTML = `<i class="hidden-indicator ri-eye-off-fill"></i>`;
+				layersElement.appendChild(hiddenElement);
+			}
 
 			layers.layersElement.appendChild(layersElement);
 
@@ -824,6 +836,17 @@ function makeLayers({easelElement, layersElement, sizeControllerElement, zoomCon
 	
 	layers.inBounds = function({x, y}) { // {{{
 		return x >= 0 && x < layers.width && y >= 0 && y < layers.height;
+	} // }}}
+
+	layers.getColor = function({x, y}) { // {{{
+		for (const layer of layers.toReversed()) {
+			// if (!layer.hidden) {
+				if (!layer.drawCanvas.isTransparent({x, y})) {
+					return layer.drawCanvas.getPixel({x, y});
+				}
+			// }
+		}
+		return makeColor({r: 0, g: 0, b: 0, a: 0});
 	} // }}}
 
 	// init

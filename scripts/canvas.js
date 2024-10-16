@@ -206,6 +206,18 @@ function makeCanvas({height, width}) {
 		return makeColor({r: data[index], g: data[index + 1], b: data[index + 2], a: data[index + 3]});
 	}; // }}}
 
+	canvas.isTransparent = function({x, y}) { // {{{
+		if (x < 0 || x >= canvas.width || y < 0 || y >= canvas.height) {
+			return true;
+		}
+		const data = canvas.getData();
+		const index = (y * canvas.width + x) * 4;
+		const a = data[index + 3];
+		if (a === 0) {
+			return true;
+		}
+	}; // }}}
+
 	canvas.drawPixel = function({x, y, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 		canvas.drawRectCustom({
 			x,
@@ -487,51 +499,30 @@ function makeCanvas({height, width}) {
 		return canvas;
 	}; // }}}
 
-	canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), smooth=false, erase=false}) { // {{{
+	canvas.drawLineWithCircles = function({x1, y1, x2, y2, diameter, color=makeColor({r: 0, g: 0, b: 0, a: 255}), erase=false}) { // {{{
 		if (diameter === 1) {
 			canvas.drawLineWithPixels({x1, y1, x2, y2, color, erase});
 			return canvas;
 		} else if (diameter <= 50) {
-			// if (smooth) {
-			// 	const dx = x2 - x1;
-			// 	const dy = y2 - y1;
-			// 	const distance = Math.sqrt(dx * dx + dy * dy);
-			// 	const steps = Math.ceil(distance / (diameter / 4));
-
-			// 	// Calculate control points for Bézier curves
-			// 	const cx = (x1 + x2) / 2; // Midpoint as control point
-			// 	const cy = (y1 + y2) / 2;
-
-			// 	for (let i = 0; i <= steps; i++) {
-			// 		const t = i / steps;
-			// 		// Quadratic Bézier interpolation formula
-			// 		const x = Math.round((1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * cx + t * t * x2);
-			// 		const y = Math.round((1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * cy + t * t * y2);
-			// 		console.log({x, y});
-			// 		canvas.drawCircle({x, y, diameter, color, erase});
-			// 	}
-			// 	return canvas;
-			// } else {
-				const dx = Math.abs(x2 - x1);
-				const dy = Math.abs(y2 - y1);
-				const sx = x1 < x2 ? 1 : -1;
-				const sy = y1 < y2 ? 1 : -1;
-				let err = dx - dy;
-				while (true) {
-					canvas.drawCircle({x: x1, y: y1, diameter, color, erase});
-					if (x1 === x2 && y1 === y2) break;
-					const e2 = 2 * err;
-					if (e2 > -dy) {
-						err -= dy;
-						x1 += sx;
-					}
-					if (e2 < dx) {
-						err += dx;
-						y1 += sy;
-					}
+			const dx = Math.abs(x2 - x1);
+			const dy = Math.abs(y2 - y1);
+			const sx = x1 < x2 ? 1 : -1;
+			const sy = y1 < y2 ? 1 : -1;
+			let err = dx - dy;
+			while (true) {
+				canvas.drawCircle({x: x1, y: y1, diameter, color, erase});
+				if (x1 === x2 && y1 === y2) break;
+				const e2 = 2 * err;
+				if (e2 > -dy) {
+					err -= dy;
+					x1 += sx;
 				}
-				return canvas;
+				if (e2 < dx) {
+					err += dx;
+					y1 += sy;
+				}
 			}
+			return canvas;
 		} else if (diameter <= 150) {
 			const dx = x2 - x1;
 			const dy = y2 - y1;

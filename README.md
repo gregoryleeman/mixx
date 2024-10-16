@@ -6,7 +6,7 @@ A simple drawing application.
 
 *"Colors were made for mixxing, not for picking..."*
 
-Play with mixx right now on [mixx.gregoryleeman.com](https://mixx.gregoryleeman.com) or download the latest release from the [releases page](https://github.com/gregoryleeman/mixx/releases).
+Play with mixx right now on [mixx.studio](https://mixx.studio).
 
 ### Attribution
 

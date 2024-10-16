@@ -1,4 +1,4 @@
-function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined, name=undefined, infoTipElement=undefined}) {
+function makeColor({r=0, g=0, b=0, a=255, previewElement=undefined, toolTipElement=undefined, name=undefined, infoTipElement=undefined}) {
 	const color = {};
 
 	color.fromRgbaArray = function({rgbaArray}) { // {{{
@@ -6,9 +6,13 @@ function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined, name=unde
 		color.g = rgbaArray[1];
 		color.b = rgbaArray[2];
 		color.a = rgbaArray[3];
-		if (controllerElement) {
-			controllerElement.style.backgroundColor = color.toRgbaString();
+		if (color.previewElement) {
+			color.previewElement.style.backgroundColor = color.toRgbaString();
 		}
+		if (color.toolTipElement) {
+			color.toolTipElement.style.color = color.toRgbaString();
+		}
+
 		return color;
 	}; // }}}
 
@@ -21,9 +25,13 @@ function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined, name=unde
 		color.g = rgbArray[1];
 		color.b = rgbArray[2];
 		color.a = 255;
-		if (controllerElement) {
-			controllerElement.style.backgroundColor = color.toRgbaString();
+		if (color.previewElement) {
+			color.previewElement.style.backgroundColor = color.toRgbaString();
 		}
+		if (color.toolTipElement) {
+			color.toolTipElement.style.color = color.toRgbaString();
+		}
+
 		return color;
 	} // }}}
 
@@ -36,9 +44,13 @@ function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined, name=unde
 		color.g = rgbaString.split(",")[1];
 		color.b = rgbaString.split(",")[2];
 		color.a = rgbaString.split(",")[3].split(")")[0];
-		if (controllerElement) {
-			controllerElement.style.backgroundColor = color.toRgbaString();
+		if (color.previewElement) {
+			color.previewElement.style.backgroundColor = color.toRgbaString();
 		}
+		if (color.toolTipElement) {
+			color.toolTipElement.style.color = color.toRgbaString();
+		}
+
 		return color;;
 	}; // }}}
 
@@ -51,9 +63,13 @@ function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined, name=unde
 		color.g = rgbString.split(",")[1];
 		color.b = rgbString.split(",")[2].split(")")[0];
 		color.a = 255;
-		if (controllerElement) {
-			controllerElement.style.backgroundColor = color.toRgbaString();
+		if (color.previewElement) {
+			color.previewElement.style.backgroundColor = color.toRgbaString();
 		}
+		if (color.toolTipElement) {
+			color.toolTipElement.style.color = color.toRgbaString();
+		}
+
 		return color;
 	}; // }}}
 
@@ -113,22 +129,26 @@ function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined, name=unde
 		return color;
 	}; // }}}
 
-	color.refreshController = function() { // {{{
-		controllerElement.style.backgroundColor = color.toRgbaString();
-		if (name && infoTipElement) {
-			controllerElement.addEventListener("pointerenter", () => {
-				infoTipElement.innerHTML = `${name}.`;
-			});
-			controllerElement.addEventListener("pointerleave", () => {
-				infoTipElement.innerHTML = 'mixx.';
-			});
+	color.refreshPreviews = function() { // {{{
+		if (color.previewElement) {
+			color.previewElement.style.backgroundColor = color.toRgbaString();
+			if (name && infoTipElement) {
+				color.previewElement.addEventListener("pointerenter", () => {
+					infoTipElement.innerHTML = `${name}.`;
+				});
+				color.previewElement.addEventListener("pointerleave", () => {
+					infoTipElement.innerHTML = 'mixx.';
+				});
+			}
+			if (color.toolTipElement) {
+				color.toolTipElement.style.color = color.toRgbaString();
+			}
 		}
 		return color;
 	} // }}}
 
 	color.refresh = function() { // {{{
-		color.refreshController();
-
+		color.refreshPreviews();
 		return color;
 	} // }}}
 
@@ -138,7 +158,14 @@ function makeColor({r=0, g=0, b=0, a=255, controllerElement=undefined, name=unde
 		color.b = b;
 		color.a = a;
 		color.name = name;
-
+		color.previewElement = previewElement;
+		color.toolTipElement = toolTipElement;
+		if (color.previewElement) {
+			color.previewElement.style.backgroundColor = color.toRgbaString();
+		}
+		if (color.toolTipElement) {
+			color.toolTipElement.style.color = color.toRgbaString();
+		}
 		return color;
 	} // }}}
 

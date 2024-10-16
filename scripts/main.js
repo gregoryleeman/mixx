@@ -121,16 +121,18 @@ const yellow = makeColor({r: 255, g: 255, b: 0, name: 'Yellow'});
 const magenta = makeColor({r: 255, g: 0, b: 255, name: 'Magenta'});
 
 const tempColor = makeColor({r: 0, g: 0, b: 0});
-const brushColor = makeColor({r: 0, g: 0, b: 0, controllerElement: brushColorElement, name: 'Current brush color', infoTipElement: infoTipElement}).refresh();
-const canvasColor = makeColor({r: 0, g: 0, b: 0, controllerElement: canvasColorElement, name: 'Color under cursor', infoTipElement: infoTipElement}).refresh();
+const brushColor = makeColor({r: 0, g: 0, b: 0, previewElement: brushColorElement, toolTipElement: toolTipElement, name: 'Current brush color', infoTipElement: infoTipElement}).refresh();
+const canvasColor = makeColor({r: 0, g: 0, b: 0, previewElement: canvasColorElement, name: 'Color under cursor', infoTipElement: infoTipElement}).refresh();
 
 // }}}
 
 // PUCKS {{{
+//
 const pucks = makePucks({
 	controllerElement: colorsElement,
-	infoTipElement: infoTipElement,
 	brushColor: brushColor,
+	infoTipElement: infoTipElement,
+	toolTipElement: toolTipElement,
 	interval: interval
 });
 
@@ -169,9 +171,9 @@ const commands = makeCommands({
 
 commands.add({ // save {{{
 	name: 'Save',
-	info: 'Save file.',
-	iconPath: 'icons/remix/file-line.svg',
-	subIconPath: 'icons/remix/save-2-fill.svg',
+	info: 'Save your project.',
+	icon: 'file-line',
+	subIcon: 'save-2-fill',
 	func: () => {
 		layers.exportBlob();
 	}
@@ -179,9 +181,9 @@ commands.add({ // save {{{
 
 commands.add({ // open {{{
 	name: 'Open',
-	info: 'Open file.',
-	iconPath: 'icons/remix/file-line.svg',
-	subIconPath: 'icons/remix/folder-open-fill.svg',
+	info: 'Open a project.',
+	icon: 'file-line',
+	subIcon: 'folder-open-fill',
 	func: () => {
 		layers.importBlob({add: false});
 	}
@@ -189,20 +191,19 @@ commands.add({ // open {{{
 
 commands.add({ // import {{{
 	name: 'Import',
-	info: 'Import a file.',
-	iconPath: 'icons/remix/file-line.svg',
-	subIconPath: 'icons/remix/add-fill.svg',
+	info: 'Import a project.',
+	icon: 'file-line',
+	subIcon: 'add-fill',
 	func: () => {
 		layers.importBlob({add: true});
 	}
 }); // }}}
 
-
 commands.add({ // export png {{{
 	name: 'Save as PNG',
-	info: 'Export as a PNG file',
-	iconPath: 'icons/remix/file-image-line.svg',
-	subIconPath: 'icons/remix/save-2-fill.svg',
+	info: 'Export as a PNG.',
+	icon: 'file-image-line',
+	subIcon: 'save-2-fill',
 	func: () => {
 		layers.exportPng();
 	}
@@ -211,18 +212,17 @@ commands.add({ // export png {{{
 commands.add({ // import image {{{
 	name: 'Import Image',
 	info: 'Import an image.',
-	iconPath: 'icons/remix/file-image-line.svg',
-	subIconPath: 'icons/remix/add-fill.svg',
+	icon: 'file-image-line',
+	subIcon: 'add-fill',
 	func: () => {
 		layers.importImage({add: true});
 	}
 }); // }}}
 
-
 commands.add({ // reset {{{
 	name: 'Reset',
 	info: 'Reset the entire project.',
-	iconPath: 'icons/remix/delete-bin-line.svg',
+	icon: 'delete-bin-line',
 	func: () => {
 		layers.reset().save().updateActive().refresh();
 	}
@@ -231,7 +231,7 @@ commands.add({ // reset {{{
 commands.add({ // home {{{
 	name: 'Home',
 	info: 'Return the easel to the home position.',
-	iconPath: 'icons/remix/home-2-line.svg',
+	icon: 'home-2-line',
 	func: () => {
 		layers.zoom({scale: 1}).refresh();
 		home();
@@ -242,7 +242,7 @@ commands.add({ // undo {{{
 	name: 'Undo',
 	info: 'Undo the last action.',
 	key: 'z',
-	iconPath: 'icons/remix/arrow-go-back-fill.svg',
+	icon: 'arrow-go-back-fill',
 	func: () => {
 		layers.undo().updateActive().refresh();
 	}
@@ -252,7 +252,7 @@ commands.add({ // redo {{{
 	name: 'Redo',
 	info: 'Redo the last action.',
 	key: 'y',
-	iconPath: 'icons/remix/arrow-go-forward-fill.svg',
+	icon: 'arrow-go-forward-fill',
 	func: () => {
 		layers.redo().updateActive().refresh();
 	}
@@ -261,7 +261,7 @@ commands.add({ // redo {{{
 commands.add({ // flip all vertical {{{
 	name: 'Flip All Vertical',
 	info: 'Flip all layers vertically.',
-	iconPath: 'icons/remix/flip-vertical-line.svg',
+	icon: 'flip-vertical-line',
 	func: () => {
 		layers.flipAllVertical();
 		layers.save().refresh();
@@ -271,7 +271,7 @@ commands.add({ // flip all vertical {{{
 commands.add({ // flip all horizontal {{{
 	name: 'Flip All Horizontal',
 	info: 'Flip all layers horizontally.',
-	iconPath: 'icons/remix/flip-horizontal-line.svg',
+	icon: 'flip-horizontal-line',
 	func: () => {
 		layers.flipAllHorizontal();
 		layers.save().refresh();
@@ -281,7 +281,7 @@ commands.add({ // flip all horizontal {{{
 commands.add({ // size 1 brush {{{
 	name: 'Size 1',
 	info: 'Set the brush size to 1.',
-	iconPath: 'icons/remix/circle-small-fill.svg',
+	icon: 'circle-fill ri-xxs',
 	func: () => {
 		brush.changeSize({size: 1});
 		brush.refresh();
@@ -291,7 +291,7 @@ commands.add({ // size 1 brush {{{
 commands.add({ // size 5 brush {{{
 	name: 'Size 5',
 	info: 'Set the brush size to 5.',
-	iconPath: 'icons/remix/circle-medium-fill.svg',
+	icon: 'circle-fill ri-sm',
 	func: () => {
 		brush.changeSize({size: 5});
 		brush.refresh();
@@ -301,7 +301,7 @@ commands.add({ // size 5 brush {{{
 commands.add({ // size 10 brush {{{
 	name: 'Size 10',
 	info: 'Set the brush size to 10.',
-	iconPath: 'icons/remix/circle-fill.svg',
+	icon: 'circle-fill',
 	func: () => {
 		brush.changeSize({size: 10});
 		brush.refresh();
@@ -324,7 +324,7 @@ const options = makeOptions({
 options.add({ // pressure sensitive {{{
 	name: 'pressure',
 	info: 'Use pen pressure to control brush size.',
-	iconPath: 'icons/remix/pen-nib-fill.svg',
+	icon: 'pen-nib-fill',
 	defaultValue : false
 }); // }}}
 
@@ -344,7 +344,7 @@ tools.push(makeTool({ // pen {{{
 	name: 'Pen',
 	info: 'Pen tool.',
 	key: 'p',
-	iconPath: 'icons/remix/ball-pen-fill.svg',
+	icon: 'ball-pen-fill',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -380,8 +380,7 @@ tools.push(makeTool({ // pen {{{
 				x2: canvasEndX,
 				y2: canvasEndY,
 				diameter: options.value({name: 'pressure'}) ? brush.getSize({pressure}) : brush.size,
-				color: brushColor,
-				smooth: true
+				color: brushColor
 			});
 		startX = endX;
 		startY = endY;
@@ -402,8 +401,8 @@ tools.push(makeTool({ // pen eraser {{{
 	name: 'Pen eraser',
 	info: 'Pen eraser tool.',
 	key: 'e',
-	iconPath: 'icons/remix/ball-pen-line.svg',
-	subIconPath: 'icons/remix/eraser-line.svg',
+	icon: 'ball-pen-line',
+	subIcon: 'eraser-line',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -461,7 +460,7 @@ tools.push(makeTool({ // pen eraser {{{
 tools.push(makeTool({ // brush {{{
 	name: 'Brush',
 	info: 'Brush tool.',
-	iconPath: 'icons/remix/brush-2-fill.svg',
+	icon: 'brush-2-fill',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -526,8 +525,8 @@ tools.push(makeTool({ // brush {{{
 tools.push(makeTool({ // brush eraser {{{
 	name: 'Brush eraser',
 	info: 'Brush eraser tool.',
-	iconPath: 'icons/remix/brush-2-line.svg',
-	subIconPath: 'icons/remix/eraser-line.svg',
+	icon: 'brush-2-line',
+	subIcon: 'eraser-line',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -593,7 +592,7 @@ tools.push(makeTool({ // brush-size {{{
 	name: 'Point size',
 	info: 'Brush size tool. Drag to change the size of the brush.',
 	key: 's',
-	iconPath: 'icons/remix/focus-2-line.svg',
+	icon: 'focus-2-line',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -627,7 +626,7 @@ tools.push(makeTool({ // color-picker {{{
     info: 'Color picker tool. Click to pick a color from the canvas.',
     key: 'p',
 	quickKey: 'i',
-    iconPath: 'icons/remix/dropper-fill.svg',
+    icon: 'dropper-fill',
     mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -670,7 +669,7 @@ tools.push(makeTool({ // color-mix {{{
 	info: 'Color mixxing tool. Click and hold to mix the current brush color with the color on the canvas.',
 	key: 'x',
 	quickKey: 'v',
-	iconPath: 'icons/remix/palette-line.svg',
+	icon: 'palette-fill',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -717,7 +716,7 @@ tools.push(makeTool({ // bucket {{{
 	name: 'Bucket',
 	info: 'Bucket tool. Click to flood-fill an area.',
 	key: 'k',
-	iconPath: 'icons/remix/paint-fill.svg',
+	icon: 'paint-fill',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -751,7 +750,7 @@ tools.push(makeTool({ // move {{{
 	name: 'Move',
 	info: 'Move tool. Click and drag to move the easel.',
 	key: 'm',
-	iconPath: 'icons/remix/drag-move-2-fill.svg',
+	icon: 'drag-move-2-fill',
 	mouseDown: (e) => {
 		startX = e.clientX - easelElement.offsetLeft;
 		startY = e.clientY - easelElement.offsetTop;
@@ -766,7 +765,7 @@ tools.push(makeTool({ // hand {{{
 	name: 'Hand',
 	info: 'Hand tool. Click and drag to move the content of the active canvas.',
 	key: 'h',
-	iconPath: 'icons/remix/hand.svg',
+	icon: 'hand',
 	mouseDown: (e) => {
 		layers.getActive()
 			.drawCanvas
@@ -786,7 +785,7 @@ tools.push(makeTool({ // hand {{{
 tools.push(makeTool({ // line {{{
 	name: 'Line',
 	info: 'Line tool. Click and drag to draw a line line.',
-	iconPath: 'icons/remix/ruler-line.svg',
+	icon: 'ruler-line',
 	mouseDrag: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -866,7 +865,7 @@ tools.push(makeTool({ // line {{{
 // tools.push(makeTool({ // distort {{{
 // 	name: 'Distort',
 // 	info: 'Squeeze and stretch the content of the active layer.',
-// 	iconPath: 'icons/solid/down-left-and-up-right-to-center.svg',
+// 	icon: 'down-left-and-up-right-to-center',
 // 	mouseDown: (e) => {
 // 		layers.getActive()
 // 			.drawCanvas
@@ -887,7 +886,7 @@ tools.push(makeTool({ // line {{{
 tools.push(makeTool({ // resize {{{
 	name: 'Resize',
 	info: 'Resize tool. Click and drag to resize the easel.',
-	iconPath: 'icons/remix/crop-line.svg',
+	icon: 'crop-line',
 	mouseDrag: (e) => {
 		// let newWidth = layers.width + Math.round(dX * layers.zoomScale);
 		// let newHeight = layers.height + Math.round(dY * layers.zoomScale);
@@ -905,7 +904,7 @@ tools.push(makeTool({ // resize {{{
 tools.push(makeTool({ // zoom {{{
 	name: 'Zoom',
 	info: 'Zoom tool. Click and drag to zoom in and out.',
-	iconPath: 'icons/remix/zoom-in-line.svg',
+	icon: 'zoom-in-line',
 	mouseDown: (e) => {
 		tempScale = layers.zoomScale;
 	},
@@ -936,7 +935,7 @@ tools.push(makeTool({ // zoom {{{
 tools.push(makeTool({ // rectangle {{{
 	name: 'Rectangle',
 	info: 'Rectangle tool. Click and drag to draw a rectangle.',
-	iconPath: 'icons/remix/rectangle-fill.svg',
+	icon: 'rectangle-fill',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -982,9 +981,9 @@ tools.push(makeTool({ // rectangle {{{
 })); // }}}
 tools.push(makeTool({ // erase rectangle {{{
 	name: 'Erase Rectangle',
-	info: 'Erase rectangle tool. Click and drag to erase a.',
-	iconPath: 'icons/remix/rectangle-line.svg',
-	subIconPath: 'icons/remix/eraser-line.svg',
+	info: 'Erase rectangle tool. Click and drag to erase a rectangle.',
+	icon: 'rectangle-line',
+	subIcon: 'eraser-line',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -1029,10 +1028,10 @@ tools.push(makeTool({ // erase rectangle {{{
 	}
 })); // }}}
 tools.push(makeTool({ // extract rectangle {{{
-	name: 'Extract Rectangle',
-	info: 'Extract a rectangle to a new layer.',
-	iconPath: 'icons/remix/rectangle-line.svg',
-	subIconPath: 'icons/remix/scissors-fill.svg',
+	name: 'Cut rectangle',
+	info: 'Cut rectangle tool. Click and drag to cut a rectangle to a new layer.',
+	icon: 'rectangle-line',
+	subIcon: 'scissors-fill',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -1075,8 +1074,8 @@ tools.push(makeTool({ // extract rectangle {{{
 
 tools.push(makeTool({ // freeform {{{
 	name: 'Freeform',
-	info: 'Draw a freeform shape (double click to complete shape).',
-	iconPath: 'icons/remix/heart-fill.svg',
+	info: 'Freeform tool. Click and/or drag to draw a shape (double-click to complete the shape).',
+	icon: 'heart-fill',
 	mouseMove: (e) => {
 
 		// cursor
@@ -1224,9 +1223,9 @@ tools.push(makeTool({ // freeform {{{
 })); // }}}
 tools.push(makeTool({ // erase freeform {{{
 	name: 'Freeform',
-	info: 'Erase a freeform shape (double click to complete shape).',
-	iconPath: 'icons/remix/heart-line.svg',
-	subIconPath: 'icons/remix/eraser-line.svg',
+	info: 'Freeform erase tool. Click and/or drag to erase a shape (double-click to complete the shape).',
+	icon: 'heart-line',
+	subIcon: 'eraser-line',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -1356,9 +1355,9 @@ tools.push(makeTool({ // erase freeform {{{
 })); // }}}
 tools.push(makeTool({ // extract freeform {{{
 	name: 'Extract',
-	info: 'Extract a freeform shape to a new layer (double click to complete shape).',
-	iconPath: 'icons/remix/heart-line.svg',
-	subIconPath: 'icons/remix/scissors-fill.svg',
+	info: 'Freeform cut tool. Click and/or drag to cut a shape to a new layer (double-click to complete the shape).',
+	icon: 'heart-line',
+	subIcon: 'scissors-fill',
 	mouseMove: (e) => {
 
 		layers.getActive()
@@ -1489,7 +1488,7 @@ tools.push(makeTool({ // extract freeform {{{
 tools.push(makeTool({ // ellipse {{{
 	name: 'Ellipse',
 	info: 'Draw an ellipse.',
-	iconPath: 'icons/solid/circle.svg',
+	icon: 'circle',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -1524,8 +1523,8 @@ tools.push(makeTool({ // ellipse {{{
 tools.push(makeTool({ // erase ellipse {{{
 	name: 'Erase Ellipse',
 	info: 'Erase an ellipse.',
-	iconPath: 'icons/regular/circle.svg',
-	subIconPath: 'icons/solid/eraser.svg',
+	icon: 'circle',
+	subIcon: 'eraser',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -1560,8 +1559,8 @@ tools.push(makeTool({ // erase ellipse {{{
 tools.push(makeTool({ // extract ellipse {{{
 	name: 'Extract Ellipse',
 	info: 'Extract an ellipse to a new layer.',
-	iconPath: 'icons/regular/circle.svg',
-	subIconPath: 'icons/solid/scissors.svg',
+	icon: 'circle',
+	subIcon: 'scissors',
 	mouseMove: (e) => {
 		layers.getActive()
 			.cursorCanvas
@@ -1615,7 +1614,7 @@ const layerCommands = makeCommands({
 layerCommands.add({ // add layer {{{
 	name: 'Add Layer',
 	info: 'Add a new layer.',
-	iconPath: 'icons/remix/add-fill.svg',
+	icon: 'add-fill',
 	func: () => {
 		layers.add().save().refreshController().refreshEasel();
 	}
@@ -1624,7 +1623,7 @@ layerCommands.add({ // add layer {{{
 layerCommands.add({ // move up {{{
 	name: 'Move Up',
 	info: 'Move the active layer up.',
-	iconPath: 'icons/remix/arrow-up-line.svg',
+	icon: 'arrow-up-line',
 	func: () => {
 		layers.moveUp({index: layers.activeIndex}).save().refreshController().refreshEasel();
 	}
@@ -1633,7 +1632,7 @@ layerCommands.add({ // move up {{{
 layerCommands.add({ // move down {{{
 	name: 'Move Down',
 	info: 'Move the active layer down.',
-	iconPath: 'icons/remix/arrow-down-line.svg',
+	icon: 'arrow-down-line',
 	func: () => {
 		layers.moveDown({index: layers.activeIndex}).save().refreshController().refreshEasel();
 	}
@@ -1642,7 +1641,7 @@ layerCommands.add({ // move down {{{
 layerCommands.add({ // merge down {{{
 	name: 'Merge Down',
 	info: 'Merge the active layer down.',
-	iconPath: 'icons/remix/arrow-down-double-line.svg',
+	icon: 'arrow-down-double-line',
 	func: () => {
 		layers.mergeDown({index: layers.activeIndex}).save().refreshController().refreshEasel().refreshPreviews();
 	}
@@ -1651,7 +1650,7 @@ layerCommands.add({ // merge down {{{
 layerCommands.add({ // duplicate layer {{{
 	name: 'Duplicate Layer',
 	info: 'Duplicate the active layer.',
-	iconPath: 'icons/remix/file-copy-line.svg',
+	icon: 'file-copy-line',
 	func: () => {
 		layers.duplicate({index: layers.activeIndex}).save().refreshController().refreshEasel().refreshPreviews();
 	}
@@ -1660,7 +1659,7 @@ layerCommands.add({ // duplicate layer {{{
 layerCommands.add({ // delete layer {{{
 	name: 'Delete Layer',
 	info: 'Delete the active layer.',
-	iconPath: 'icons/remix/delete-bin-line.svg',
+	icon: 'delete-bin-line',
 	func: () => {
 		layers.remove({index: layers.activeIndex}).save().refreshController().refreshEasel();
 	}
@@ -1669,7 +1668,7 @@ layerCommands.add({ // delete layer {{{
 layerCommands.add({ // flip vertical {{{
 	name: 'Flip Vertical',
 	info: 'Flip the active layer vertically.',
-	iconPath: 'icons/remix/flip-vertical-line.svg',
+	icon: 'flip-vertical-line',
 	func: () => {
 		layers.getActive().flipVertical();
 		layers.save().refresh();
@@ -1679,10 +1678,30 @@ layerCommands.add({ // flip vertical {{{
 layerCommands.add({ // flip horizontal {{{
 	name: 'Flip Horizontal',
 	info: 'Flip the active layer horizontally.',
-	iconPath: 'icons/remix/flip-horizontal-line.svg',
+	icon: 'flip-horizontal-line',
 	func: () => {
 		layers.getActive().flipHorizontal();
 		layers.save().refresh();
+	}
+}); // }}}
+
+layerCommands.add({ // fill {{{
+	name: 'Fill',
+	info: 'Fill the active layer with a color.',
+	icon: 'paint-brush-fill',
+	func: () => {
+		layers.getActive().drawCanvas.fillAll({color: brushColor});
+		layers.save().refresh();
+	}
+}); // }}}
+
+layerCommands.add({ // hide {{{
+	name: 'Hide',
+	info: 'Hide the active layer.',
+	icon: 'eye-off-fill',
+	func: () => {
+		layers.getActive().toggleHide();
+		layers.refresh();
 	}
 }); // }}}
 
@@ -1690,7 +1709,7 @@ layerCommands.add({ // clear {{{
 	name: 'Clear',
 	info: 'Clear the active layer.',
 	key: 'c',
-	iconPath: 'icons/remix/sparkling-line.svg',
+	icon: 'sparkling-line',
 	func: () => {
 		layers.getActive().drawCanvas.clear();
 		layers.save().refresh();
@@ -1728,7 +1747,8 @@ function studioPointerMove(e) { // {{{
 	canvasEndY = canvas.getPositionOnCanvas(e).y;
 	canvasDX = canvasEndX - canvasStartX;
 	canvasDY = canvasEndY - canvasStartY;
-	canvasColor.copy({color2: canvas.getPixel({x: canvasEndX, y: canvasEndY})}).refresh();
+	// canvasColor.copy({color2: canvas.getPixel({x: canvasEndX, y: canvasEndY})}).refresh();
+	canvasColor.copy({color2: layers.getColor({x: canvasEndX, y: canvasEndY})}).refresh();
 
 	if (tools.active) {
 
@@ -1749,9 +1769,10 @@ function studioPointerMove(e) { // {{{
 
 	}
 
-	toolTipElement.style.display = 'block';
 	toolTipElement.style.left = `${e.clientX + 5}px`;
-	toolTipElement.style.top = `${e.clientY - 16 - 5}px`;
+	toolTipElement.style.top = `${e.clientY - 22 - 5}px`;
+
+	toolTipElement.style.display = 'block';
 
 }
 
@@ -1948,6 +1969,14 @@ document.addEventListener('keydown', (e) => {
 	});
 
 	commands.forEach(command => {
+		if (command.key) {
+			if (command.key.toLowerCase() === e.key.toLowerCase()) {
+				command.func();
+			}
+		}
+	});
+
+	layerCommands.forEach(command => {
 		if (command.key) {
 			if (command.key.toLowerCase() === e.key.toLowerCase()) {
 				command.func();

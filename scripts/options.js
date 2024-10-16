@@ -1,9 +1,9 @@
-function makeOption({name, info, key=undefined, iconPath, defaultValue}) {
+function makeOption({name, info, key=undefined, icon, defaultValue}) {
 	const option = {};
 	option.name = name;
 	option.info = info;
 	option.key = key;
-	option.iconPath = iconPath;
+	option.icon = icon;
 	option.value = defaultValue;
 	option.toggle = function() {
 		option.value = !option.value;
@@ -16,8 +16,8 @@ function makeOptions({controllerElement, infoTipElement}) {
 	options.controllerElement = controllerElement;
 	options.infoTipElement = infoTipElement;
 
-	options.add = function({name, info, key, iconPath, defaultValue}) {
-		const option = makeOption({name, info, key, iconPath, defaultValue});
+	options.add = function({name, info, key, icon, defaultValue}) {
+		const option = makeOption({name, info, key, icon, defaultValue});
 		options.push(option);
 	};
 
@@ -37,7 +37,7 @@ function makeOptions({controllerElement, infoTipElement}) {
 			button.classList.add('button');
 			button.classList.add('option-button');
 			button.classList.add(option.value ? 'active' : 'inactive');
-			button.innerHTML = `<img src="${option.iconPath}" alt="${option.name}">`;
+			button.innerHTML = `<i class="icon ri-${option.icon}"></i>`;
 			button.addEventListener("pointerdown", () => {
 				option.toggle();
 				options.refreshController();

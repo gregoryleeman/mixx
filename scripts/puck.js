@@ -1,4 +1,4 @@
-function makePucks({controllerElement, brushColor, interval, infoTipElement}) {
+function makePucks({controllerElement, brushColor, interval, infoTipElement, toolTipElement}) {
 	const pucks = [];
 
 	pucks.refreshController = function() { // {{{
@@ -21,6 +21,13 @@ function makePucks({controllerElement, brushColor, interval, infoTipElement}) {
 				infoTipElement.innerHTML = `${puck.color.name} (click and hold to mix with current brush color).`;
 			});
 
+			element.addEventListener('pointermove', (e) => {
+				toolTipElement.innerHTML = '<i class="icon ri-palette-fill"></i>';
+				toolTipElement.style.display = 'block';
+				toolTipElement.style.left = `${e.clientX + 5}px`;
+				toolTipElement.style.top = `${e.clientY - 22 - 5}px`;
+			});
+
 			element.addEventListener('pointerup', (e) => {
 				clearInterval(interval);
 			});
@@ -28,6 +35,8 @@ function makePucks({controllerElement, brushColor, interval, infoTipElement}) {
 			element.addEventListener('pointerleave', (e) => {
 				clearInterval(interval);
 				infoTipElement.innerHTML = 'mixx.';
+				toolTipElement.style.display = 'none';
+				tools.refreshToolTip();
 			});
 
 			controllerElement.appendChild(element);

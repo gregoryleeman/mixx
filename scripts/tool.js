@@ -1,6 +1,6 @@
-function makeTool({name, toolClass, info, key, quickKey, iconPath, subIconPath, mouseDown=undefined, mouseMove=undefined, mouseDrag=undefined, mouseUp=undefined, mouseLeave=undefined, mouseDoubleClick=undefined}) {
-	if (!name || !iconPath) {
-		throw new Error("name and iconPath are required to make a tool");
+function makeTool({name, toolClass, info, key, quickKey, icon, subIcon, mouseDown=undefined, mouseMove=undefined, mouseDrag=undefined, mouseUp=undefined, mouseLeave=undefined, mouseDoubleClick=undefined}) {
+	if (!name || !icon) {
+		throw new Error("name and icon are required to make a tool");
 	}
 
 	const tool = {};
@@ -11,8 +11,8 @@ function makeTool({name, toolClass, info, key, quickKey, iconPath, subIconPath, 
 		tool.info = info;
 		tool.key = key;
 		tool.quickKey = quickKey;
-		tool.subIconPath = subIconPath;
-		tool.iconPath = iconPath;
+		tool.subIcon = subIcon;
+		tool.icon = icon;
 		tool.mouseDown = mouseDown;
 		tool.mouseMove = mouseMove;
 		tool.mouseDrag = mouseDrag;
@@ -93,9 +93,9 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 			if (tool === tools.active) {
 				button.classList.add("active");
 			}
-			button.innerHTML = `<img src="${tool.iconPath}" alt="${tool.name}" draggable="false">`;
-			if (tool.subIconPath) {
-				button.innerHTML += `<img class="sub-icon" src="${tool.subIconPath}" alt="${tool.name}" draggable="false">`;
+			button.innerHTML = `<i class="icon ri-${tool.icon}"></i>`;
+			if (tool.subIcon) {
+				button.innerHTML += `<i class="sub-icon ri-${tool.subIcon}"></i>`;
 			}
 			button.addEventListener("pointerdown", () => {
 				tools.activate({tool}).refresh();
@@ -103,9 +103,9 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 
 			button.addEventListener("pointerenter", () => {
 				tools.infoTipElement.innerHTML = tool.info;
-				if (tool.key) {
-					tools.infoTipElement.innerHTML += ` Hotkey: '${tool.key.toUpperCase()}' (temporary: '${tool.key.toLowerCase()}')`;
-				}
+				// if (tool.key) {
+				// 	tools.infoTipElement.innerHTML += ` Hotkey: '${tool.key.toUpperCase()}' (temporary: '${tool.key.toLowerCase()}')`;
+				// }
 
 			});
 
@@ -140,7 +140,7 @@ function makeTools({controllerElement, toolTipElement, infoTipElement}) {
 
 	tools.refreshToolTip = function() { // {{{
 		if (tools.active) {
-			tools.toolTipElement.innerHTML = `<img src="${tools.active.iconPath}" alt="${tools.active.name}" draggable="false">`;
+			tools.toolTipElement.innerHTML = `<i class="icon ri-${tools.active.icon}"></i>`;
 		}
 		return tools;
 	}; // }}}
