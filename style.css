@@ -131,7 +131,7 @@ body {
 
 
 #studio {
-	/* position: relative; */
+	position: relative;
 	flex-grow: 1;
 	height: 100%;
 	border-top: 2px solid var(--darkergrey);
@@ -279,8 +279,8 @@ canvas {
 #layers {
 	width: var(--layer-size);
 	position: absolute;
-	right: 48px;
-	bottom: 48px;
+	right: 0;
+	bottom: 0;
 	height: 100%;
 	display: flex;
 	flex-direction: column-reverse;
@@ -417,13 +417,18 @@ canvas {
 
 
 #info-tip {
-	padding-left: 8px;
-	padding-top: 4px;
-	background-color: var(--lightgrey);
+	position: absolute;
+	left: 0;
+	bottom: 0;
+	padding: 0 0 0 2px;
 	z-index: 5;
 	overflow: hidden;
 	white-space: nowrap;
-	flex-shrink: 0;
+	color: var(--black);
+	background-color: var(--grey);
+	border-radius: 0 4px 0 0;
+	border-top: 1px solid var(--darkergrey);
+	border-right: 1px solid var(--darkergrey);
 }
 
 #version {

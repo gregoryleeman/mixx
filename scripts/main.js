@@ -25,6 +25,7 @@ const initialHeight = 600;
 const maxBrushSize = 500;
 const tolerance = 1;
 const brushBuffer = 4;
+var firstStroke = true;
 
 // }}}
 
@@ -66,8 +67,10 @@ var angle = 0;
 
 function home() {
 	const rect = studioElement.getBoundingClientRect();
-	easelElement.style.left = `${rect.left + 2}px`;
-	easelElement.style.top = `${rect.top + 2}px`;
+	// easelElement.style.left = `${rect.left + 2}px`;
+	// easelElement.style.top = `${rect.top + 2}px`;
+	easelElement.style.left = 0;
+	easelElement.style.top = 0;
 }
 
 // }}}
@@ -488,17 +491,32 @@ tools.push(makeTool({ // brush {{{
 				angle = Math.atan2(yBuffer[brushBuffer - 1] - yBuffer[0], xBuffer[brushBuffer - 1] - xBuffer[0]);
 				xBuffer.shift();
 				yBuffer.shift();
-				layers.getActive()
-					.drawCanvas
-					.drawLineWithRotatedSquares({
-						x1: canvasStartX,
-						y1: canvasStartY,
-						x2: canvasEndX,
-						y2: canvasEndY,
-						width: options.value({name: 'pressure'}) ? brush.getSize({pressure}) : brush.size,
-						color: brushColor,
-						angle: angle
-					});
+				if (firstStroke) {
+					layers.getActive()
+						.drawCanvas
+						.drawLineWithRotatedSquares({
+							x1: xBuffer[0],
+							y1: yBuffer[0],
+							x2: canvasEndX,
+							y2: canvasEndY,
+							width: options.value({name: 'pressure'}) ? brush.getSize({pressure}) : brush.size,
+							color: brushColor,
+							angle: angle
+						});
+					firstStroke = false;
+				} else {
+					layers.getActive()
+						.drawCanvas
+						.drawLineWithRotatedSquares({
+							x1: canvasStartX,
+							y1: canvasStartY,
+							x2: canvasEndX,
+							y2: canvasEndY,
+							width: options.value({name: 'pressure'}) ? brush.getSize({pressure}) : brush.size,
+							color: brushColor,
+							angle: angle
+						});
+				}
 			}
 			xBuffer.push(canvasEndX);
 			yBuffer.push(canvasEndY);
@@ -512,6 +530,7 @@ tools.push(makeTool({ // brush {{{
 		layers.refreshPreviews().save();
 		xBuffer = [];
 		yBuffer = [];
+		firstStroke = true;
 	},
 	mouseLeave: (e) => {
 		layers.getActive()
@@ -519,6 +538,7 @@ tools.push(makeTool({ // brush {{{
 			.clear();
 		xBuffer = [];
 		yBuffer = [];
+		firstStroke = true;
 	}
 })); // }}}
 

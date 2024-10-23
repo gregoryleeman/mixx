@@ -8,7 +8,7 @@
 
 *"Colors were made for mixxing, NOT 'picking'..."*
 
-Play with mixx right now on [mixx.studio](https://mixx.studio)
+Play with mixx right now on [mixx.gregoryleeman.com](https://mixx.gregoryleeman.com).
 
 ### Attribution
 
